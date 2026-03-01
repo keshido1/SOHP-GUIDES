@@ -28,7 +28,7 @@
 <h2>All Guides</h2>
 <div id="guides"></div>
 
-<!-- Load Supabase v1 CDN LAST -->
+<!-- Supabase v1 CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
 <script>
   // Wait until supabase is loaded
@@ -46,7 +46,7 @@
 
   waitForSupabase().then(() => {
     const supabaseClient = supabase.createClient(
-      "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your URL
+      "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your Supabase URL
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
     );
 
@@ -54,7 +54,7 @@
     const imageInput = document.getElementById("image");
     const videoInput = document.getElementById("video");
 
-    // Live preview for guides
+    // Live preview for guide images/videos
     imageInput.addEventListener("change", () => {
       previewContainer.innerHTML = "";
       const file = imageInput.files[0];
@@ -74,64 +74,70 @@
       }
     });
 
+    // Create guide
     async function createGuide() {
-  const title = document.getElementById("title").value.trim();
-  const content = document.getElementById("content").value.trim();
-  const imageFile = imageInput.files[0];
-  const videoFile = videoInput.files[0];
-  if (!title || !content) return alert("Enter title and content");
+      const title = document.getElementById("title").value.trim();
+      const content = document.getElementById("content").value.trim();
+      const imageFile = imageInput.files[0];
+      const videoFile = videoInput.files[0];
 
-  let imageUrl = null;
-  let videoUrl = null;
+      if (!title || !content) return alert("Enter title and content");
 
-  try {
-    if (imageFile) {
-      const { data, error } = await supabaseClient.storage.from("guide-media")
-        .upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
-      if (error) {
-        console.error("Image upload error:", error);
-        alert("Image upload failed: " + error.message);
-        return;
+      let imageUrl = null;
+      let videoUrl = null;
+
+      try {
+        // Upload image
+        if (imageFile) {
+          const { data, error } = await supabaseClient.storage.from("guide-media")
+            .upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
+          if (error) {
+            console.error("Image upload error:", error);
+            alert("Image upload failed: " + error.message);
+            return;
+          }
+          imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
+        }
+
+        // Upload video
+        if (videoFile) {
+          const { data, error } = await supabaseClient.storage.from("guide-media")
+            .upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
+          if (error) {
+            console.error("Video upload error:", error);
+            alert("Video upload failed: " + error.message);
+            return;
+          }
+          videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
+        }
+
+        // Insert guide
+        const { data, error } = await supabaseClient.from("Euides")
+          .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }])
+          .single();
+        if (error) {
+          console.error("Guide insert error:", error);
+          alert("Guide insert failed: " + error.message);
+          return;
+        }
+
+        console.log("Guide posted successfully:", data);
+
+        // Clear inputs
+        document.getElementById("title").value = "";
+        document.getElementById("content").value = "";
+        imageInput.value = "";
+        videoInput.value = "";
+        previewContainer.innerHTML = "";
+
+        loadGuides();
+      } catch (err) {
+        console.error("Unexpected error posting guide:", err);
+        alert("Unexpected error: " + err.message);
       }
-      imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
     }
 
-    if (videoFile) {
-      const { data, error } = await supabaseClient.storage.from("guide-media")
-        .upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
-      if (error) {
-        console.error("Video upload error:", error);
-        alert("Video upload failed: " + error.message);
-        return;
-      }
-      videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
-    }
-
-    const { data, error } = await supabaseClient.from("Euides")
-      .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }])
-      .single(); // use single() to get the inserted row
-
-    if (error) {
-      console.error("Insert guide error:", error);
-      alert("Guide insert failed: " + error.message);
-      return;
-    }
-
-    console.log("Guide posted successfully:", data);
-
-    document.getElementById("title").value = "";
-    document.getElementById("content").value = "";
-    imageInput.value = "";
-    videoInput.value = "";
-    previewContainer.innerHTML = "";
-
-    loadGuides();
-  } catch (err) {
-    console.error("Unexpected error posting guide:", err);
-    alert("Unexpected error: " + err.message);
-  }
-}
-
+    // Post comment
     async function postComment(guideId, textInput, fileInput) {
       const text = textInput.value.trim();
       const file = fileInput.files[0];
@@ -155,6 +161,7 @@
       }
     }
 
+    // Load guides + comments
     async function loadGuides() {
       try {
         const { data: guides, error } = await supabaseClient.from("Euides")
