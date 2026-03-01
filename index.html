@@ -3,220 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V12 Approval System</title>
+    <title>SOHP Guides - V14 Ultra Glass</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --peach: #ff8e6e; --dark-peach: #e66a4e; --glass: rgba(255, 255, 255, 0.95); }
-        body, html { margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; min-height: 100vh; color: #333; }
+        :root { 
+            --peach: #ff8e6e; 
+            --neon: #ff6b42;
+            --glass: rgba(255, 255, 255, 0.96); 
+            --card-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
 
-        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -1; transition: 0.6s; filter: blur(8px) brightness(0.6); }
+        body { 
+            margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #1a1a1a; color: #111; line-height: 1.6;
+        }
+
+        /* Background blur is now more intense for text readability */
+        .bg-layer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-size: cover; background-position: center; z-index: -1; 
+            filter: blur(15px) brightness(0.5); transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
-        body.wallpaper-mode .container, body.wallpaper-mode .admin-trigger { opacity: 0; pointer-events: none; }
+        body.wallpaper-mode .main-ui, body.wallpaper-mode .admin-trigger { opacity: 0; pointer-events: none; }
 
-        h1, h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); text-align: center; }
+        .main-ui { transition: 0.4s ease; padding: 20px; }
+        .container { display: flex; max-width: 1200px; margin: 0 auto; gap: 30px; flex-wrap: wrap; justify-content: center; }
 
-        .container { display: flex; max-width: 1100px; margin: 0 auto; padding: 20px; gap: 25px; flex-wrap: wrap; justify-content: center; }
-        .main-col { flex: 2; min-width: 320px; }
+        h1 { 
+            font-size: 3rem; color: white; text-align: center; margin-bottom: 30px;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.5); letter-spacing: -1px;
+        }
+
+        .main-col { flex: 2; min-width: 350px; }
         .side-col { flex: 1; min-width: 300px; }
 
-        .card { background: var(--glass); border-radius: 20px; padding: 25px; margin-bottom: 25px; border: 2px solid var(--peach); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .card h3 { color: var(--dark-peach); margin-top: 0; }
-        .tag-badge { display: inline-block; background: var(--peach); color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
+        /* Card Styling */
+        .card { 
+            background: var(--glass); border-radius: 24px; padding: 30px; 
+            margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2); 
+            position: relative; box-shadow: var(--card-shadow);
+        }
 
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 12px; font-family: inherit; box-sizing: border-box; }
-        button { background: var(--peach); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:hover { background: var(--dark-peach); }
+        .card h3 { font-size: 1.5rem; color: #000; margin-top: 0; font-weight: 800; }
+        .card p { font-size: 1.1rem; color: #444; }
 
-        .admin-trigger { position: fixed; bottom: 85px; right: 20px; background: #333; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 99; border: 2px solid white; }
-        .toggle-ui { position: fixed; bottom: 20px; right: 20px; background: white; color: var(--peach); width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 99; border: 2px solid var(--peach); font-size: 24px; }
+        /* Search & Filter Bar */
+        .search-row { 
+            display: flex; gap: 15px; margin-bottom: 30px; 
+            background: rgba(0,0,0,0.4); padding: 10px; border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
 
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; background: #fff; z-index: 1000; border-radius: 30px; padding: 30px; display: none; box-shadow: 0 0 100px rgba(0,0,0,0.8); border: 5px solid var(--peach); }
-        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; display: none; }
+        input, textarea, select { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #eee; 
+            border-radius: 16px; font-family: inherit; font-size: 1rem; transition: 0.3s;
+        }
+        input:focus { border-color: var(--peach); outline: none; box-shadow: 0 0 10px rgba(255,142,110,0.3); }
 
-        .pending-item { border: 2px dashed var(--peach); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
+        button { 
+            background: var(--peach); color: white; border: none; padding: 15px; 
+            border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        button:hover { background: var(--neon); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,107,66,0.3); }
+
+        /* Tag Styling */
+        .tag-badge { 
+            background: var(--peach); color: white; padding: 6px 14px; 
+            border-radius: 10px; font-size: 12px; font-weight: 800; 
+            text-transform: uppercase; margin-bottom: 12px; display: inline-block;
+        }
+
+        /* Admin UI */
+        .admin-trigger { position: fixed; bottom: 90px; right: 25px; background: #222; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #444; color: white; z-index: 100; font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .toggle-ui { position: fixed; bottom: 20px; right: 25px; background: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--peach); color: var(--peach); z-index: 100; font-size: 28px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+
+        #adminPanel { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 95%; max-width: 600px; max-height: 85vh; overflow-y: auto; 
+            background: white; z-index: 1001; border-radius: 32px; padding: 40px; 
+            display: none; border: 4px solid var(--peach);
+        }
+        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; }
+
+        .cat-manager-item { display: flex; justify-content: space-between; background: #f8f8f8; padding: 12px; border-radius: 12px; margin: 8px 0; border: 1px solid #eee; }
+        .delete-btn { position: absolute; top: 20px; right: 20px; color: #ff4d4d; cursor: pointer; font-size: 22px; }
         .hidden { display: none !important; }
-        .delete-btn { position: absolute; top: 15px; right: 15px; color: #ff4d4d; cursor: pointer; font-size: 20px; }
+
+        @media (max-width: 768px) { .container { flex-direction: column; } .search-row { flex-direction: column; } }
     </style>
 </head>
 <body>
 
     <div class="bg-layer" id="bg"></div>
+    
     <div class="admin-trigger" onclick="openAdmin()">⚙️</div>
     <div class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
-
-    <div id="adminOverlay" onclick="closeAdmin()"></div>
-    <div id="adminPanel">
-        <h2 style="color:var(--peach)!important; text-shadow:none;">Admin Approval Panel</h2>
-        
-        <div class="card" style="box-shadow:none;">
-            <h3>Pending Guides</h3>
-            <div id="pending-list">No guides awaiting approval.</div>
-        </div>
-
-        <div class="card" style="box-shadow:none;">
-            <h3>Settings & Updates</h3>
-            <textarea id="upContent" placeholder="Announcement..."></textarea>
-            <button onclick="postUpdate()" style="background:#444">Post Update</button>
-            <input id="bgUrl" placeholder="Wallpaper URL" style="margin-top:15px;">
-            <button onclick="changeBackground()" style="background:#888;">Update BG</button>
-        </div>
-        
-        <button onclick="closeAdmin()" style="background:#eee; color:#333;">Close</button>
-    </div>
-
-    <div class="container">
-        <div class="main-col">
-            <h1>🌸 SOHP GUIDES</h1>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <input type="text" id="searchBar" placeholder="🔍 Search..." onkeyup="runFilters()" style="margin:0;">
-                <select id="filterCategory" onchange="runFilters()" style="margin:0; width:150px;"></select>
-            </div>
-            
-            <div id="guides-list"></div>
-
-            <div class="card">
-                <h2 style="color:var(--peach)!important; text-shadow:none;">Submit a Guide</h2>
-                <p style="text-align:center; font-size:13px;">Guides will be reviewed by staff before appearing.</p>
-                <input id="title" placeholder="Title">
-                <select id="postCategory"></select>
-                <textarea id="content" placeholder="Content..." rows="4"></textarea>
-                <input type="file" id="fileInput">
-                <button onclick="submitForReview()">Submit for Review ✨</button>
-            </div>
-        </div>
-
-        <div class="side-col">
-            <h1>✨ UPDATES</h1>
-            <div id="updates-list"></div>
-        </div>
-    </div>
-
-<script>
-    const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
-    let isUnlocked = false;
-
-    function openAdmin() {
-        if(!isUnlocked) {
-            if(prompt("Admin Password?") === 'skibidi') isUnlocked = true;
-            else return;
-        }
-        document.getElementById('adminPanel').style.display = 'block';
-        document.getElementById('adminOverlay').style.display = 'block';
-        loadPending();
-    }
-
-    function closeAdmin() {
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('adminOverlay').style.display = 'none';
-    }
-
-    async function load() {
-        // Wallpaper
-        const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-        if (bg) document.getElementById('bg').style.backgroundImage = `url('${bg.value}')`;
-
-        // Cats
-        const { data: cats } = await client.from("guide_categories").select("*");
-        const f = document.getElementById('filterCategory');
-        const p = document.getElementById('postCategory');
-        f.innerHTML = '<option value="All">All Categories</option>';
-        p.innerHTML = '';
-        cats.forEach(c => {
-            f.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-            p.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-        });
-
-        // Approved Guides
-        const { data: g } = await client.from("Euides").select("*").eq("approved", true).order("created_at", { ascending: false });
-        const gDiv = document.getElementById("guides-list");
-        gDiv.innerHTML = "";
-        g.forEach(item => {
-            let media = item.image_url ? `<img src="${item.image_url}" style="width:100%; border-radius:15px; margin:10px 0;"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach); font-weight:bold;">💾 Download</a>` : "";
-            gDiv.innerHTML += `
-                <div class="card" data-category="${item.category}">
-                    ${isUnlocked ? `<div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div>` : ''}
-                    <span class="tag-badge">${item.category}</span>
-                    <h3>${item.title}</h3>
-                    <p>${item.content}</p>
-                    ${media}
-                </div>`;
-        });
-
-        // Updates
-        const { data: u } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-        const uDiv = document.getElementById("updates-list");
-        uDiv.innerHTML = "";
-        u.forEach(up => {
-            uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:6px solid var(--peach);">${isUnlocked ? `<div class="delete-btn" onclick="del('community_updates', ${up.id})">🗑️</div>` : ''}<p>${up.content}</p></div>`;
-        });
-    }
-
-    async function submitForReview() {
-        const t = document.getElementById("title").value;
-        const c = document.getElementById("content").value;
-        const cat = document.getElementById("postCategory").value;
-        const f = document.getElementById("fileInput").files[0];
-        if(!t || !c) return alert("Please fill in the guide!");
-
-        let url = null;
-        if (f) {
-            const name = Date.now() + "_" + f.name;
-            await client.storage.from("guide-media").upload(name, f);
-            url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
-        }
-        await client.from("Euides").insert([{ title: t, content: c, image_url: url, category: cat, approved: false }]);
-        alert("Submitted! Waiting for approval. 🌸");
-        location.reload();
-    }
-
-    async function loadPending() {
-        const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const pDiv = document.getElementById("pending-list");
-        pDiv.innerHTML = p.length ? "" : "No pending guides.";
-        p.forEach(item => {
-            pDiv.innerHTML += `
-                <div class="pending-item">
-                    <strong>${item.title}</strong> (${item.category})
-                    <p style="font-size:12px;">${item.content.substring(0, 50)}...</p>
-                    <button onclick="approveGuide(${item.id})" style="padding:5px; margin-top:5px;">Approve ✅</button>
-                    <button onclick="del('Euides', ${item.id})" style="padding:5px; background:#ff4d4d; margin-top:5px;">Reject ❌</button>
-                </div>`;
-        });
-    }
-
-    async function approveGuide(id) {
-        await client.from("Euides").update({ approved: true }).eq("id", id);
-        alert("Approved!");
-        loadPending();
-        load();
-    }
-
-    async function postUpdate() {
-        await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
-        location.reload();
-    }
-
-    async function changeBackground() {
-        await client.from("site_settings").upsert({ id: "wallpaper", value: document.getElementById('bgUrl').value });
-        location.reload();
-    }
-
-    window.del = async (t, id) => {
-        if(confirm("Delete this?")) { await client.from(t).delete().eq("id", id); location.reload(); }
-    };
-
-    function runFilters() {
-        const q = document.getElementById('searchBar').value.toLowerCase();
-        const cat = document.getElementById('filterCategory').value;
-        document.querySelectorAll('#guides-list .card').forEach(g => {
-            const match = (g.innerText.toLowerCase().includes(q)) && (cat === "All" || g.dataset.category === cat);
-            g.classList.toggle('hidden', !match);
-        });
-    }
-
-    window.onload = load;
-</script>
-</body>
-</html>
