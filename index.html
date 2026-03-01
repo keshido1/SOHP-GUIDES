@@ -16,20 +16,15 @@
         #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.5s ease; }
         body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
 
-        /* Wallpaper Mode */
         body.wallpaper-mode .main-ui, body.wallpaper-mode h1 { opacity: 0; pointer-events: none; transform: scale(0.98); }
         body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: rgba(0,0,0,0); }
 
         .main-ui { padding: 40px 20px; position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; transition: 0.5s ease; }
         .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px; }
 
-        /* Card & Pin Styles */
-        .card { background: var(--glass); border-radius: 28px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: 0.3s; }
-        .pinned { border: 3px solid #ffd700 !important; box-shadow: 0 0 25px rgba(255,215,0,0.2) !important; }
-        .pin-badge { position: absolute; top: -12px; left: 20px; background: #ffd700; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 800; z-index: 60; }
-
+        .card { background: var(--glass); border-radius: 28px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        
         .delete-x { position: absolute; top: 15px; right: 15px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; cursor: pointer; z-index: 50; border: none; }
-        .pin-btn { position: absolute; top: 15px; right: 48px; background: #475569; color: white; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; }
 
         .time-tag { font-size: 11px; color: #64748b; font-weight: 800; display: block; margin-bottom: 5px; }
         .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; }
@@ -38,7 +33,6 @@
         input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid var(--outline); border-radius: 16px; box-sizing: border-box; font-family: inherit; }
         button { background: var(--peach); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; }
 
-        /* Admin Dashboard */
         #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 800px; max-height: 85vh; overflow-y: auto; background: white; z-index: 9999; border-radius: 35px; padding: 35px; display: none; border: 4px solid var(--peach); }
         #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9998; display: none; }
         .admin-tag-item { display: flex; justify-content: space-between; background: #f1f5f9; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; align-items: center; }
@@ -65,7 +59,7 @@
         </div>
 
         <hr style="margin:25px 0; border:1px solid #eee;">
-        <h3>Review Queue (Pending Approval)</h3>
+        <h3>Review Queue</h3>
         <div id="pendingList">Scanning for submissions...</div>
 
         <hr style="margin:25px 0; border:1px solid #eee;">
@@ -82,7 +76,7 @@
         <div class="grid">
             <div>
                 <div class="card" style="border-top: 6px solid var(--peach);">
-                    <h2 style="margin:0; color:var(--peach);">Create Guide</h2>
+                    <h2 style="margin:0; color:var(--peach);">Submit Guide</h2>
                     <input id="gTitle" placeholder="Title">
                     <select id="gCat"></select>
                     <textarea id="gContent" placeholder="Details..." rows="4"></textarea>
@@ -121,7 +115,6 @@
     function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('adminOverlay').style.display = 'none'; }
     
     async function safeDelete(table, id) { if(checkPass()) { await client.from(table).delete().eq("id", id); location.reload(); } }
-    async function togglePin(id, current) { if(checkPass()) { await client.from('Euides').update({pinned: !current}).eq('id', id); location.reload(); } }
 
     function getMediaHTML(url) {
         if(!url) return "";
@@ -138,27 +131,21 @@
         f.innerHTML = '<option value="All">All Tags</option>'; p.innerHTML = '';
         cats?.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; p.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
 
-        // LOAD GUIDES: Filter specifically for approved: true
-        const { data: gs, error } = await client.from("Euides").select("*").eq("approved", true).order("pinned", {ascending: false}).order("created_at", {ascending: false});
+        // Removed .order("pinned") to prevent the error you saw
+        const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", {ascending: false});
         const gDiv = document.getElementById("guides-list"); 
+        gDiv.innerHTML = gs?.length ? "" : "<p style='color:white; text-align:center;'>No guides found.</p>";
         
-        if (error || !gs || gs.length === 0) {
-            gDiv.innerHTML = "<p style='color:white; text-align:center;'>No guides found.</p>";
-        } else {
-            gDiv.innerHTML = "";
-            gs.forEach(g => {
-                gDiv.innerHTML += `<div class="card ${g.pinned ? 'pinned' : ''}" data-cat="${g.category}">
-                    ${g.pinned ? '<div class="pin-badge">📌 PINNED</div>' : ''}
-                    <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
-                    <div class="pin-btn" onclick="togglePin(${g.id}, ${g.pinned})">📌</div>
-                    <span class="time-tag">🕒 ${timeAgo(g.created_at)}</span>
-                    <span style="font-size:10px; font-weight:800; color:var(--peach);">${g.category}</span>
-                    <h3 style="margin:5px 0;">${g.title}</h3>
-                    <p style="white-space:pre-wrap; font-size:14px; color:#334;">${g.content}</p>
-                    ${getMediaHTML(g.image_url)}
-                </div>`;
-            });
-        }
+        gs?.forEach(g => {
+            gDiv.innerHTML += `<div class="card" data-cat="${g.category}">
+                <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
+                <span class="time-tag">🕒 ${timeAgo(g.created_at)}</span>
+                <span style="font-size:10px; font-weight:800; color:var(--peach);">${g.category}</span>
+                <h3 style="margin:5px 0;">${g.title}</h3>
+                <p style="white-space:pre-wrap; font-size:14px; color:#334;">${g.content}</p>
+                ${getMediaHTML(g.image_url)}
+            </div>`;
+        });
 
         const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
         const uDiv = document.getElementById("updates-list"); uDiv.innerHTML = "";
@@ -171,8 +158,7 @@
     }
 
     async function loadAdmin() {
-        // LOAD PENDING: Filter specifically for approved: false
-        const { data: p } = await client.from("Euides").select("*").or("approved.eq.false,approved.is.null").order("created_at", {ascending: false});
+        const { data: p } = await client.from("Euides").select("*").eq("approved", false).order("created_at", {ascending: false});
         const pDiv = document.getElementById("pendingList"); 
         pDiv.innerHTML = p?.length ? "" : "No guides pending review.";
         p?.forEach(i => {
@@ -196,7 +182,7 @@
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
-        if(!t || !c) return alert("Fill fields.");
+        if(!t || !c) return alert("Please fill out the title and content.");
         
         let url = null;
         if(f) {
@@ -205,18 +191,17 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
 
-        // Fix: Explicitly set approved: false and pinned: false
+        // Removed 'pinned' from the insert list to fix your error
         const { error } = await client.from("Euides").insert([{
             title: t, 
             content: c, 
             category: cat, 
             image_url: url, 
-            approved: false, 
-            pinned: false
+            approved: false
         }]);
 
-        if(error) alert("Error submitting: " + error.message);
-        else { alert("Sent to staff!"); location.reload(); }
+        if(error) alert("Error: " + error.message);
+        else { alert("Sent for review!"); location.reload(); }
     }
 
     async function addTag() { const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{name: n}]); location.reload(); } }
