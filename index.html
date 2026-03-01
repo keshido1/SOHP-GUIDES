@@ -30,14 +30,31 @@
 <h2>All Guides</h2>
 <div id="guides"></div>
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SOHP Guides</title>
+  <!-- Supabase v1 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
+</head>
+<body>
+
+<h1>SOHP Guides</h1>
+
+<!-- Your HTML content here -->
+
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  // ✅ Supabase client ready after CDN loads
+  // This script runs after the CDN is loaded
   const supabaseClient = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // your anon key
+    "https://ioruwtajlnnxxqmgxugn.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
   );
 
+  console.log("Supabase is ready:", supabaseClient);
+</script>
+
+</body>
+</html>
   const previewContainer = document.getElementById("preview");
   const imageInput = document.getElementById("image");
   const videoInput = document.getElementById("video");
