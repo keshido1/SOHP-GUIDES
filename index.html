@@ -2,13 +2,15 @@
 <html>
 <head>
   <title>SOHP Guides</title>
-  <!-- ✅ Supabase v1 CDN for browser -->
+  <!-- Supabase v1 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
-    .post { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
+    .post, .comment { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
     img, video { max-width: 100%; margin-top: 10px; display: block; }
     #preview img, #preview video { margin-bottom: 10px; }
+    .comment-container { margin-left: 20px; }
+    .comment input, .comment textarea { width: 100%; margin-top: 5px; }
   </style>
 </head>
 <body>
@@ -18,15 +20,11 @@
 <h2>Create Guide</h2>
 <input id="title" placeholder="Guide title"><br><br>
 <textarea id="content" placeholder="Guide content"></textarea><br><br>
-
 <label>Upload Image:</label>
 <input type="file" id="image" accept="image/*"><br><br>
-
 <label>Upload Video:</label>
 <input type="file" id="video" accept="video/*"><br><br>
-
 <div id="preview"></div>
-
 <button id="postGuideBtn">Post Guide</button>
 
 <h2>All Guides</h2>
@@ -34,17 +32,16 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // ✅ Correct v1 CDN initialization
   const supabaseClient = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
+    "https://ioruwtajlnnxxqmgxugn.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
   );
 
   const previewContainer = document.getElementById("preview");
   const imageInput = document.getElementById("image");
   const videoInput = document.getElementById("video");
 
-  // Live preview of image/video
+  // Live preview for guides
   imageInput.addEventListener("change", () => {
     previewContainer.innerHTML = "";
     const file = imageInput.files[0];
@@ -54,7 +51,6 @@ window.addEventListener("DOMContentLoaded", () => {
       previewContainer.appendChild(img);
     }
   });
-
   videoInput.addEventListener("change", () => {
     const file = videoInput.files[0];
     if (file) {
@@ -65,45 +61,34 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Function to create a guide
   async function createGuide() {
     const title = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
     const imageFile = imageInput.files[0];
     const videoFile = videoInput.files[0];
-
-    if (!title || !content) {
-      alert("Please enter a title and content");
-      return;
-    }
+    if (!title || !content) return alert("Enter title and content");
 
     let imageUrl = null;
     let videoUrl = null;
 
     try {
-      // Upload image
       if (imageFile) {
-        const { data, error } = await supabaseClient
-          .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
+        const { data, error } = await supabaseClient.storage.from("guide-media")
+          .upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
         if (error) throw error;
         imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
       }
-
-      // Upload video
       if (videoFile) {
-        const { data, error } = await supabaseClient
-          .storage.from("guide-media").upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
+        const { data, error } = await supabaseClient.storage.from("guide-media")
+          .upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
         if (error) throw error;
         videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
       }
 
-      // Insert into Euides table
-      const { error } = await supabaseClient
-        .from("Euides")
+      const { error } = await supabaseClient.from("Euides")
         .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }]);
       if (error) throw error;
 
-      // Clear inputs
       document.getElementById("title").value = "";
       document.getElementById("content").value = "";
       imageInput.value = "";
@@ -112,16 +97,37 @@ window.addEventListener("DOMContentLoaded", () => {
 
       loadGuides();
     } catch (err) {
-      console.error("Error posting guide:", err.message);
       alert("Error posting guide: " + err.message);
+      console.error(err);
     }
   }
 
-  // Function to load all guides
+  async function postComment(guideId, textInput, fileInput) {
+    const text = textInput.value.trim();
+    const file = fileInput.files[0];
+    if (!text && !file) return alert("Enter text or upload an image");
+
+    let imageUrl = null;
+    try {
+      if (file) {
+        const { data, error } = await supabaseClient.storage.from("guide-media")
+          .upload(`comments/${Date.now()}_${file.name}`, file);
+        if (error) throw error;
+        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
+      }
+      const { error } = await supabaseClient.from("Ecomments")
+        .insert([{ guide_id: guideId, text, image_url: imageUrl }]);
+      if (error) throw error;
+      loadGuides();
+    } catch (err) {
+      alert("Error posting comment: " + err.message);
+      console.error(err);
+    }
+  }
+
   async function loadGuides() {
     try {
-      const { data, error } = await supabaseClient
-        .from("Euides")
+      const { data: guides, error } = await supabaseClient.from("Euides")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -129,7 +135,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const container = document.getElementById("guides");
       container.innerHTML = "";
 
-      data.forEach(g => {
+      for (const g of guides) {
         const div = document.createElement("div");
         div.className = "post";
         div.innerHTML = `
@@ -137,9 +143,37 @@ window.addEventListener("DOMContentLoaded", () => {
           <p>${g.content}</p>
           ${g.image_url ? `<img src="${g.image_url}" />` : ""}
           ${g.video_url ? `<video src="${g.video_url}" controls></video>` : ""}
+          <div class="comment-container" id="comments-${g.id}"></div>
+          <textarea id="comment-text-${g.id}" placeholder="Write a comment"></textarea><br>
+          <input type="file" id="comment-file-${g.id}" accept="image/*"><br>
+          <button id="comment-btn-${g.id}">Post Comment</button>
         `;
         container.appendChild(div);
-      });
+
+        // Load comments for this guide
+        const { data: comments } = await supabaseClient.from("Ecomments")
+          .select("*")
+          .eq("guide_id", g.id)
+          .order("created_at", { ascending: true });
+        const commentContainer = document.getElementById(`comments-${g.id}`);
+        commentContainer.innerHTML = "";
+        comments.forEach(c => {
+          const cDiv = document.createElement("div");
+          cDiv.className = "comment";
+          cDiv.innerHTML = `
+            <p>${c.text}</p>
+            ${c.image_url ? `<img src="${c.image_url}" />` : ""}
+          `;
+          commentContainer.appendChild(cDiv);
+        });
+
+        // Add event listener for comment button
+        document.getElementById(`comment-btn-${g.id}`).addEventListener("click", () => {
+          const textInput = document.getElementById(`comment-text-${g.id}`);
+          const fileInput = document.getElementById(`comment-file-${g.id}`);
+          postComment(g.id, textInput, fileInput);
+        });
+      }
     } catch (err) {
       console.error("Error loading guides:", err.message);
     }
