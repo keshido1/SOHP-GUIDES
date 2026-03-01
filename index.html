@@ -2,8 +2,8 @@
 <html>
 <head>
   <title>SOHP Guides</title>
-  <!-- Supabase JS v2 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+  <!-- ✅ Supabase v1 CDN for browser -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
     .post { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
@@ -28,8 +28,8 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // ✅ Correct v2 CDN initialization
-  const supabaseClient = Supabase.createClient(
+  // ✅ Correct v1 CDN initialization
+  const supabaseClient = supabase.createClient(
     "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
   );
@@ -54,7 +54,7 @@ window.addEventListener("DOMContentLoaded", () => {
           .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
         if (imageError) throw imageError;
 
-        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
+        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(imageData.key).publicURL;
       }
 
       // Insert guide into Euides table
