@@ -1,43 +1,140 @@
-async function loadGuides() {
-    const { data, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
-    const container = document.getElementById("guides");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SOHP Guides</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.42.0/supabase.js"></script>
     
-    if (error) { 
-        container.innerHTML = "Error: " + error.message; 
-        return; 
-    }
-    
-    container.innerHTML = data.length ? "" : "No guides found.";
-    
-    data.forEach(g => {
-        let mediaHTML = "";
-        
-        if (g.image_url) {
-            // 1. Identify if it's an image for the preview
-            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
-            
-            if (isImage) {
-                mediaHTML += `<img src="${g.image_url}" style="display:block; max-width:100%; border-radius:8px; margin-bottom:10px;">`;
-            }
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .post { background: white; border: 1px solid #ddd; padding: 20px; margin: 15px 0; border-radius: 10px; position: relative; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: #1877f2; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-download { background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-top: 10px; text-align: center; width: auto; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px; font-size: 12px; width: auto; }
+        img { max-width: 100%; margin-top: 10px; border-radius: 8px; display: block; }
+        #guides { margin-top: 30px; }
+    </style>
+</head>
+<body>
 
-            // 2. Always add the Download Button if any file exists
-            // We use target="_blank" and the 'download' attribute
-            mediaHTML += `
-                <div style="margin-top: 10px;">
-                    <a href="${g.image_url}" 
-                       target="_blank" 
-                       download 
-                       style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 14px; border: 1px solid #1e7e34;">
-                       ⬇️ Download Attached File
-                    </a>
-                </div>`;
+    <h1>SOHP Guides</h1>
+
+    <div class="card">
+        <h2>Create New Guide</h2>
+        <input id="title" placeholder="Guide title">
+        <textarea id="content" placeholder="Write your content here..." rows="4"></textarea>
+        <label style="font-size: 13px; color: #666;">Attach any file (Image, PDF, ZIP, etc.):</label>
+        <input type="file" id="image">
+        <button id="postBtn">Post Guide</button>
+    </div>
+
+    <h2>Community Guides</h2>
+    <div id="guides">Connecting to Supabase...</div>
+
+    <script>
+        let client;
+
+        function startApp() {
+            if (typeof supabase === 'undefined') {
+                let backup = document.createElement('script');
+                backup.src = "https://unpkg.com/@supabase/supabase-js";
+                backup.onload = () => initSupabase();
+                document.head.appendChild(backup);
+            } else {
+                initSupabase();
+            }
         }
 
-        container.innerHTML += `
-            <div class="post" style="border-bottom: 1px solid #ddd; padding-bottom: 20px;">
-                <h3>${g.title || "Untitled"}</h3>
-                <p style="white-space: pre-wrap;">${g.content || ""}</p>
-                ${mediaHTML}
-            </div>`;
-    });
-}
+        function initSupabase() {
+            client = supabase.createClient(
+                "https://ioruwtajlnnxxqmgxugn.supabase.co", 
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
+            );
+            fetchGuides();
+        }
+
+        async function fetchGuides() {
+            const { data, error } = await client.from("Euides").select("*").order("created_at", { ascending: false });
+            const container = document.getElementById("guides");
+            if (error) { container.innerHTML = "Error: " + error.message; return; }
+            
+            container.innerHTML = data.length ? "" : "No guides found.";
+            
+            data.forEach(g => {
+                let mediaHTML = "";
+                if (g.image_url) {
+                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
+                    if (isImage) {
+                        mediaHTML += `<img src="${g.image_url}">`;
+                    }
+                    mediaHTML += `<a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download File</a>`;
+                }
+
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                postDiv.innerHTML = `
+                    <button class="btn-delete" onclick="deletePost(${g.id})">Delete</button>
+                    <h3>${g.title || "Untitled"}</h3>
+                    <p style="white-space: pre-wrap;">${g.content || ""}</p>
+                    ${mediaHTML}
+                `;
+                container.appendChild(postDiv);
+            });
+        }
+
+        document.getElementById("postBtn").onclick = async () => {
+            const title = document.getElementById("title").value;
+            const content = document.getElementById("content").value;
+            const file = document.getElementById("image").files[0];
+            const btn = document.getElementById("postBtn");
+            let imageUrl = null;
+
+            if (!title || !content) return alert("Please add a title and content.");
+
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            try {
+                if (file) {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const { error: uploadErr } = await client.storage.from("guide-media").upload(fileName, file);
+                    if (uploadErr) throw uploadErr;
+                    
+                    const { data: urlData } = client.storage.from("guide-media").getPublicUrl(fileName);
+                    imageUrl = urlData.publicUrl;
+                }
+
+                const { error: dbErr } = await client.from("Euides").insert([{ title, content, image_url: imageUrl }]);
+                if (dbErr) throw dbErr;
+
+                location.reload();
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.innerText = "Post Guide";
+                btn.disabled = false;
+            }
+        };
+
+        // PASSWORD PROTECTION ADDED HERE
+        window.deletePost = async (id) => {
+            const pass = prompt("Enter the admin password to delete this post:");
+            
+            if (pass === 'skibidi') {
+                const { error } = await client.from("Euides").delete().eq("id", id);
+                if (error) {
+                    alert("Database Error: " + error.message);
+                } else {
+                    alert("Post deleted successfully.");
+                    location.reload();
+                }
+            } else if (pass !== null) {
+                alert("Incorrect password!");
+            }
+        };
+
+        window.onload = startApp;
+    </script>
+</body>
+</html>
