@@ -2,11 +2,11 @@
 <html>
 <head>
   <title>SOHP Guides</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <style>
-    body { font-family: Arial; max-width: 800px; margin: auto; }
-    .post { border: 1px solid #ccc; padding: 10px; margin: 15px 0; }
-    img { max-width: 100%; }
+    body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
+    .post { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
+    img, video { max-width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -16,43 +16,88 @@
 <h2>Create Guide</h2>
 <input id="title" placeholder="Guide title"><br><br>
 <textarea id="content" placeholder="Guide content"></textarea><br><br>
-<input type="file" id="image"><br><br>
+<label>Upload Image:</label>
+<input type="file" id="image" accept="image/*"><br><br>
+<label>Upload Video:</label>
+<input type="file" id="video" accept="video/*"><br><br>
 <button onclick="createGuide()">Post Guide</button>
 
 <h2>All Guides</h2>
 <div id="guides"></div>
 
 <script>
+// Initialize Supabase
 const supabase = supabase.createClient(
   "https://ioruwtajlnnxxqmgxugn.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
+  "YOUR_ANON_KEY"
 );
 
 async function createGuide() {
   const title = document.getElementById("title").value;
   const content = document.getElementById("content").value;
+  const imageFile = document.getElementById("image").files[0];
+  const videoFile = document.getElementById("video").files[0];
 
+  let imageUrl = null;
+  let videoUrl = null;
+
+  // Upload image if selected
+  if (imageFile) {
+    const { data: imageData, error: imageError } = await supabase
+      .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
+
+    if (imageError) return alert("Image upload failed: " + imageError.message);
+    imageUrl = supabase.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
+  }
+
+  // Upload video if selected
+  if (videoFile) {
+    const { data: videoData, error: videoError } = await supabase
+      .storage.from("guide-media").upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
+
+    if (videoError) return alert("Video upload failed: " + videoError.message);
+    videoUrl = supabase.storage.from("guide-media").getPublicUrl(videoData.path).data.publicUrl;
+  }
+
+  // Insert guide into database
   const { data, error } = await supabase
     .from("guides")
-    .insert([{ title, content }]);
+    .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }]);
 
-  if (error) alert(error.message);
+  if (error) return alert("Guide creation failed: " + error.message);
+
+  // Clear inputs
+  document.getElementById("title").value = "";
+  document.getElementById("content").value = "";
+  document.getElementById("image").value = "";
+  document.getElementById("video").value = "";
+
   loadGuides();
 }
 
 async function loadGuides() {
-  const { data } = await supabase.from("guides").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("guides")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  document.getElementById("guides").innerHTML = "";
+  if (error) return alert(error.message);
+
+  const container = document.getElementById("guides");
+  container.innerHTML = "";
 
   data.forEach(g => {
     const div = document.createElement("div");
     div.className = "post";
-    div.innerHTML = `<h3>${g.title}</h3><p>${g.content}</p>`;
-    document.getElementById("guides").appendChild(div);
+    div.innerHTML = `<h3>${g.title}</h3>
+                     <p>${g.content}</p>
+                     ${g.image_url ? `<img src="${g.image_url}">` : ""}
+                     ${g.video_url ? `<video src="${g.video_url}" controls></video>` : ""}`;
+    container.appendChild(div);
   });
 }
 
+// Load guides on page load
 loadGuides();
 </script>
 
