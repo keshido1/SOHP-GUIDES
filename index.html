@@ -3,22 +3,26 @@
 <head>
   <title>SOHP Guides</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f9f9f9; }
-    .post, .comment { border: 1px solid #ddd; padding: 15px; margin: 20px 0; background: white; border-radius: 8px; }
-    img, video { max-width: 100%; margin-top: 10px; display: block; border-radius: 4px; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f4; }
+    .post, .comment { border: 1px solid #ccc; padding: 15px; margin: 20px 0; background: #fff; border-radius: 5px; }
+    img, video { max-width: 100%; margin-top: 10px; display: block; }
+    .comment-container { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; }
     input, textarea { width: 100%; margin-top: 5px; padding: 8px; box-sizing: border-box; }
-    button { margin-top: 10px; padding: 8px 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+    button { margin-top: 10px; padding: 10px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 3px; }
   </style>
 </head>
 <body>
 
 <h1>SOHP Guides</h1>
 
-<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+<div style="background: white; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
   <h2>Create Guide</h2>
-  <input id="title" placeholder="Guide title">
-  <textarea id="content" placeholder="Guide content" rows="4"></textarea>
-  <input type="file" id="image" accept="image/*">
+  <input id="title" placeholder="Guide title"><br>
+  <textarea id="content" placeholder="Guide content"></textarea><br>
+  <label>Upload Image:</label>
+  <input type="file" id="image" accept="image/*"><br>
+  <label>Upload Video:</label>
+  <input type="file" id="video" accept="video/*"><br>
   <div id="preview"></div>
   <button id="postGuideBtn">Post Guide</button>
 </div>
@@ -28,14 +32,16 @@
 
 <script 
   src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"
-  onload="initApp()"
-></script>
+  onload="initApp()">
+</script>
 
 <script>
   let supabaseClient;
 
+  // This function runs automatically once the CDN is ready
   async function initApp() {
-    // Now supabase is guaranteed to be defined
+    console.log("Supabase is loaded. Initializing...");
+    
     supabaseClient = supabase.createClient(
       "https://ioruwtajlnnxxqmgxugn.supabase.co", 
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
@@ -45,15 +51,25 @@
     loadGuides();
   }
 
-  // Define your createGuide, loadGuides, and postComment functions here
   async function createGuide() {
     const title = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
-    if (!title || !content) return alert("Fill in title and content");
+    const imageFile = document.getElementById("image").files[0];
+
+    if (!title || !content) return alert("Enter title and content");
 
     try {
-      const { error } = await supabaseClient.from("Euides").insert([{ title, content }]);
+      let imageUrl = null;
+      if (imageFile) {
+        const path = `images/${Date.now()}_${imageFile.name}`;
+        await supabaseClient.storage.from("guide-media").upload(path, imageFile);
+        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(path).publicURL;
+      }
+
+      const { error } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
       if (error) throw error;
+
+      alert("Guide Posted!");
       location.reload();
     } catch (err) {
       alert("Error: " + err.message);
@@ -61,20 +77,25 @@
   }
 
   async function loadGuides() {
-    try {
-      const { data: guides, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
+    const { data: guides, error } = await supabaseClient.from("Euides")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      const container = document.getElementById("guides");
-      guides.forEach(g => {
-        const div = document.createElement("div");
-        div.className = "post";
-        div.innerHTML = `<h3>${g.title}</h3><p>${g.content}</p>`;
-        container.appendChild(div);
-      });
-    } catch (err) {
-      console.error("Fetch error:", err.message);
-    }
+    if (error) return console.error("Error loading guides:", error);
+
+    const container = document.getElementById("guides");
+    container.innerHTML = "";
+
+    guides.forEach(g => {
+      const div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = `
+        <h3>${g.title}</h3>
+        <p>${g.content}</p>
+        ${g.image_url ? `<img src="${g.image_url}">` : ""}
+      `;
+      container.appendChild(div);
+    });
   }
 </script>
 </body>
