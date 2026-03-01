@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SOHP Guides</title>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: auto; }
+    .post { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+<h1>SOHP Guides</h1>
+
+<h2>Create a Guide</h2>
+<input type="text" id="title" placeholder="Guide Title"><br><br>
+<textarea id="content" placeholder="Write your guide..."></textarea><br><br>
+<button onclick="createPost()">Post Guide</button>
+
+<h2>Guides</h2>
+<div id="posts"></div>
+
+<script>
+function createPost() {
+  const title = document.getElementById("title").value;
+  const content = document.getElementById("content").value;
+
+  const postDiv = document.createElement("div");
+  postDiv.className = "post";
+  postDiv.innerHTML = "<h3>" + title + "</h3><p>" + content + "</p>";
+
+  document.getElementById("posts").appendChild(postDiv);
+}
+</script>
+
+</body>
+</html>
