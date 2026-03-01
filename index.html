@@ -1,100 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SOHP Guides</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.42.0/supabase.js"></script>
-    
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; }
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        img { max-width: 100%; margin-top: 10px; border-radius: 5px; }
-    </style>
-</head>
-<body>
+<input type="file" id="image"> <script>
+    window.onload = function() {
+        const supabaseClient = supabase.createClient(
+            "https://ioruwtajlnnxxqmgxugn.supabase.co", 
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
+        );
 
-    <h1>SOHP Guides</h1>
-
-    <div class="card">
-        <h2>Create Guide</h2>
-        <input id="title" placeholder="Guide title">
-        <textarea id="content" placeholder="Content" rows="4"></textarea>
-        <input type="file" id="image" accept="image/*">
-        <button id="postBtn">Post Guide</button>
-    </div>
-
-    <div id="guides">Connecting...</div>
-
-    <script>
-        // Use a function to check if supabase is ready
-        function startApp() {
-            if (typeof supabase === 'undefined') {
-                // If the first script failed, try to inject a backup CDN
-                console.log("Source 1 blocked, trying Source 2...");
-                let backupScript = document.createElement('script');
-                backupScript.src = "https://unpkg.com/@supabase/supabase-js";
-                backupScript.onload = () => initSupabase();
-                document.head.appendChild(backupScript);
-            } else {
-                initSupabase();
-            }
-        }
-
-        function initSupabase() {
-            const client = supabase.createClient(
-                "https://ioruwtajlnnxxqmgxugn.supabase.co", 
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
-            );
-
-            // Load Data
-            async function fetchGuides() {
-                const { data, error } = await client.from("Euides").select("*").order("created_at", { ascending: false });
-                const container = document.getElementById("guides");
-                if (error) { container.innerHTML = "DB Error: " + error.message; return; }
-                container.innerHTML = data.length ? "" : "No guides found.";
-                data.forEach(g => {
-                    container.innerHTML += `
-                        <div class="post">
-                            <h3>${g.title}</h3>
-                            <p>${g.content}</p>
-                            ${g.image_url ? `<img src="${g.image_url}">` : ""}
-                        </div>`;
-                });
-            }
-
-            // Handle Post
-            document.getElementById("postBtn").onclick = async () => {
-                const title = document.getElementById("title").value;
-                const content = document.getElementById("content").value;
-                const file = document.getElementById("image").files[0];
-                let imageUrl = null;
-
-                if (file) {
-                    const fileName = `${Date.now()}_${file.name}`;
-                    const { data: uploadData, error: uploadErr } = await client.storage
-                        .from("guide-media")
-                        .upload(fileName, file);
-                    
-                    if (uploadErr) {
-                        alert("Upload Error: " + uploadErr.message);
-                        return;
+        async function loadGuides() {
+            const { data, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
+            const container = document.getElementById("guides");
+            if (error) { container.innerHTML = "Error: " + error.message; return; }
+            container.innerHTML = data.length ? "" : "No guides found.";
+            
+            data.forEach(g => {
+                let mediaHTML = "";
+                if (g.image_url) {
+                    // Check if it's an image to show a preview, otherwise just a download link
+                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
+                    if (isImage) {
+                        mediaHTML = `<img src="${g.image_url}" style="display:block; margin-bottom:10px;">`;
                     }
-                    const { data: urlData } = client.storage.from("guide-media").getPublicUrl(fileName);
-                    imageUrl = urlData.publicUrl;
+                    mediaHTML += `<a href="${g.image_url}" download target="_blank" 
+                                    style="display:inline-block; padding:8px 12px; background:#28a745; color:white; text-decoration:none; border-radius:4px; font-size:14px;">
+                                    Download File
+                                  </a>`;
                 }
 
-                const { error } = await client.from("Euides").insert([{ title, content, image_url: imageUrl }]);
-                if (error) alert(error.message);
-                else location.reload();
-            };
-
-            fetchGuides();
+                container.innerHTML += `
+                    <div class="post">
+                        <h3>${g.title}</h3>
+                        <p>${g.content}</p>
+                        ${mediaHTML}
+                    </div>`;
+            });
         }
 
-        window.onload = startApp;
-    </script>
-</body>
-</html>
+        document.getElementById("postBtn").onclick = async () => {
+            const title = document.getElementById("title").value;
+            const content = document.getElementById("content").value;
+            const file = document.getElementById("image").files[0];
+            let imageUrl = null;
+
+            if (file) {
+                const fileName = `${Date.now()}_${file.name}`;
+                // This uploads any file type
+                const { data: uploadData, error: uploadErr } = await supabaseClient.storage
+                    .from("guide-media")
+                    .upload(fileName, file);
+                
+                if (uploadErr) {
+                    alert("Upload failed: " + uploadErr.message);
+                    return;
+                }
+                const { data: urlData } = supabaseClient.storage.from("guide-media").getPublicUrl(fileName);
+                imageUrl = urlData.publicUrl;
+            }
+
+            const { error } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
+            if (error) alert(error.message);
+            else location.reload();
+        };
+
+        loadGuides();
+    };
+</script>
