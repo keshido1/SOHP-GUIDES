@@ -120,14 +120,27 @@
         };
 
         window.deletePost = async (id) => {
-            const pass = prompt("Enter password to delete:");
-            if (pass === 'skibidi') {
-                const { error } = await client.from("Euides").delete().eq("id", id);
-                if (error) alert("Delete failed: " + error.message);
-                else location.reload();
-            } else if (pass !== null) {
-                alert("Wrong password!");
-            }
+    const pass = prompt("Enter password to delete:");
+    
+    if (pass === 'skibidi') {
+        // We add { count: 'exact' } to verify a row was actually removed
+        const { error, count } = await client
+            .from("Euides")
+            .delete({ count: 'exact' })
+            .eq("id", id);
+
+        if (error) {
+            alert("Database Error: " + error.message);
+        } else if (count === 0) {
+            alert("Error: Post found in list but not found in database. Try refreshing.");
+        } else {
+            alert("Successfully deleted from database.");
+            location.reload();
+        }
+    } else if (pass !== null) {
+        alert("Wrong password!");
+    }
+};
         };
     </script>
 </body>
