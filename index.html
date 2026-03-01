@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>SOHP Guides</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.42.0/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f0f2f5; }
@@ -11,10 +11,12 @@
         .post { background: white; border: 1px solid #ddd; padding: 20px; margin: 15px 0; border-radius: 10px; position: relative; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         button { background: #1877f2; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .btn-download { background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-top: 10px; text-align: center; width: auto; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px; font-size: 12px; width: auto; }
-        img { max-width: 100%; margin-top: 10px; border-radius: 8px; display: block; }
+        .btn-download { background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-top: 10px; text-align: center; width: auto; font-weight: bold; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px; font-size: 11px; width: auto; opacity: 0.7; }
+        .btn-delete:hover { opacity: 1; }
+        img { max-width: 100%; margin-top: 10px; border-radius: 8px; display: block; border: 1px solid #eee; }
         #guides { margin-top: 30px; }
+        .loading-text { text-align: center; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
@@ -25,27 +27,26 @@
         <h2>Create New Guide</h2>
         <input id="title" placeholder="Guide title">
         <textarea id="content" placeholder="Write your content here..." rows="4"></textarea>
-        <label style="font-size: 13px; color: #666;">Attach any file (Image, PDF, ZIP, etc.):</label>
+        <label style="font-size: 13px; color: #666; display: block; margin-top: 10px;">Attach File (Any type):</label>
         <input type="file" id="image">
         <button id="postBtn">Post Guide</button>
     </div>
 
     <h2>Community Guides</h2>
-    <div id="guides">Connecting to Supabase...</div>
+    <div id="guides" class="loading-text">Connecting to database...</div>
 
     <script>
         let client;
 
-        function startApp() {
+        // Ensure app starts only after script is loaded
+        window.onload = function() {
             if (typeof supabase === 'undefined') {
-                let backup = document.createElement('script');
-                backup.src = "https://unpkg.com/@supabase/supabase-js";
-                backup.onload = () => initSupabase();
-                document.head.appendChild(backup);
-            } else {
-                initSupabase();
+                alert("Supabase library failed to load. Please check your internet or disable ad-blockers.");
+                document.getElementById('guides').innerHTML = "Error: Library Blocked.";
+                return;
             }
-        }
+            initSupabase();
+        };
 
         function initSupabase() {
             client = supabase.createClient(
@@ -58,18 +59,19 @@
         async function fetchGuides() {
             const { data, error } = await client.from("Euides").select("*").order("created_at", { ascending: false });
             const container = document.getElementById("guides");
-            if (error) { container.innerHTML = "Error: " + error.message; return; }
+            if (error) { container.innerHTML = "DB Error: " + error.message; return; }
             
             container.innerHTML = data.length ? "" : "No guides found.";
+            container.classList.remove("loading-text");
             
             data.forEach(g => {
                 let mediaHTML = "";
                 if (g.image_url) {
                     const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
                     if (isImage) {
-                        mediaHTML += `<img src="${g.image_url}">`;
+                        mediaHTML += `<img src="${g.image_url}" alt="Preview">`;
                     }
-                    mediaHTML += `<a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download File</a>`;
+                    mediaHTML += `<a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download Attached File</a>`;
                 }
 
                 const postDiv = document.createElement('div');
@@ -91,9 +93,9 @@
             const btn = document.getElementById("postBtn");
             let imageUrl = null;
 
-            if (!title || !content) return alert("Please add a title and content.");
+            if (!title || !content) return alert("Please fill in the title and content.");
 
-            btn.innerText = "Uploading...";
+            btn.innerText = "Processing...";
             btn.disabled = true;
 
             try {
@@ -117,24 +119,16 @@
             }
         };
 
-        // PASSWORD PROTECTION ADDED HERE
         window.deletePost = async (id) => {
-            const pass = prompt("Enter the admin password to delete this post:");
-            
+            const pass = prompt("Enter password to delete:");
             if (pass === 'skibidi') {
                 const { error } = await client.from("Euides").delete().eq("id", id);
-                if (error) {
-                    alert("Database Error: " + error.message);
-                } else {
-                    alert("Post deleted successfully.");
-                    location.reload();
-                }
+                if (error) alert("Delete failed: " + error.message);
+                else location.reload();
             } else if (pass !== null) {
-                alert("Incorrect password!");
+                alert("Wrong password!");
             }
         };
-
-        window.onload = startApp;
     </script>
 </body>
 </html>
