@@ -2,146 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SOHP Guides</title>
+    <title>SOHP Guides & Updates</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .post { background: white; border: 1px solid #ddd; padding: 20px; margin: 15px 0; border-radius: 10px; position: relative; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { background: #1877f2; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .btn-download { background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px; margin-top: 10px; text-align: center; width: auto; font-weight: bold; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; position: absolute; top: 15px; right: 15px; font-size: 11px; width: auto; opacity: 0.7; }
-        .btn-delete:hover { opacity: 1; }
-        img { max-width: 100%; margin-top: 10px; border-radius: 8px; display: block; border: 1px solid #eee; }
-        #guides { margin-top: 30px; }
-        .loading-text { text-align: center; color: #666; font-style: italic; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; justify-content: center; }
+        .container { display: flex; width: 100%; max-width: 1200px; padding: 20px; gap: 20px; }
+        
+        /* Main Section */
+        .main-content { flex: 2; }
+        /* Sidebar Section */
+        .sidebar { flex: 1; min-width: 300px; }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 10px; position: relative; }
+        
+        /* Update specific style */
+        .update-item { font-size: 14px; border-left: 4px solid #1877f2; padding: 10px; margin-bottom: 10px; background: #f9f9f9; position: relative; }
+
+        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: #1877f2; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        
+        .btn-download { background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 13px; margin-top: 10px; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 3px 7px; border-radius: 4px; cursor: pointer; position: absolute; top: 10px; right: 10px; font-size: 10px; }
+        
+        img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
+        h1, h2 { color: #1c1e21; }
     </style>
 </head>
 <body>
 
-    <h1>SOHP Guides</h1>
-
-    <div class="card">
-        <h2>Create New Guide</h2>
-        <input id="title" placeholder="Guide title">
-        <textarea id="content" placeholder="Write your content here..." rows="4"></textarea>
-        <label style="font-size: 13px; color: #666; display: block; margin-top: 10px;">Attach File (Any type):</label>
-        <input type="file" id="image">
-        <button id="postBtn">Post Guide</button>
+<div class="container">
+    <div class="main-content">
+        <h1>SOHP Guides</h1>
+        <div class="card">
+            <h2>New Guide</h2>
+            <input id="title" placeholder="Guide title">
+            <textarea id="content" placeholder="Content..." rows="3"></textarea>
+            <input type="file" id="fileInput">
+            <button id="postBtn">Post Guide</button>
+        </div>
+        <div id="guides">Loading Guides...</div>
     </div>
 
-    <h2>Community Guides</h2>
-    <div id="guides" class="loading-text">Connecting to database...</div>
+    <div class="sidebar">
+        <h2>Community Updates</h2>
+        <div class="card">
+            <textarea id="updateContent" placeholder="New announcement..." rows="2"></textarea>
+            <button id="updateBtn" style="background: #333;">Post Update</button>
+        </div>
+        <div id="updates">Loading Updates...</div>
+    </div>
+</div>
 
-    <script>
-        let client;
+<script>
+    const client = supabase.createClient(
+        "https://ioruwtajlnnxxqmgxugn.supabase.co", 
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
+    );
 
-        // Ensure app starts only after script is loaded
-        window.onload = function() {
-            if (typeof supabase === 'undefined') {
-                alert("Supabase library failed to load. Please check your internet or disable ad-blockers.");
-                document.getElementById('guides').innerHTML = "Error: Library Blocked.";
-                return;
-            }
-            initSupabase();
-        };
+    async function loadData() {
+        // Load Guides
+        const { data: guides } = await client.from("Euides").select("*").order("created_at", { ascending: false });
+        const gDiv = document.getElementById("guides");
+        gDiv.innerHTML = "";
+        guides.forEach(g => {
+            let media = g.image_url ? (/\.(jpg|jpeg|png|gif)$/i.test(g.image_url) ? `<img src="${g.image_url}">` : "") + `<br><a href="${g.image_url}" class="btn-download">Download File</a>` : "";
+            gDiv.innerHTML += `<div class="post"><button class="btn-delete" onclick="deleteItem('Euides', ${g.id})">X</button><h3>${g.title}</h3><p>${g.content}</p>${media}</div>`;
+        });
 
-        function initSupabase() {
-            client = supabase.createClient(
-                "https://ioruwtajlnnxxqmgxugn.supabase.co", 
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
-            );
-            fetchGuides();
-        }
-
-        async function fetchGuides() {
-            const { data, error } = await client.from("Euides").select("*").order("created_at", { ascending: false });
-            const container = document.getElementById("guides");
-            if (error) { container.innerHTML = "DB Error: " + error.message; return; }
-            
-            container.innerHTML = data.length ? "" : "No guides found.";
-            container.classList.remove("loading-text");
-            
-            data.forEach(g => {
-                let mediaHTML = "";
-                if (g.image_url) {
-                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
-                    if (isImage) {
-                        mediaHTML += `<img src="${g.image_url}" alt="Preview">`;
-                    }
-                    mediaHTML += `<a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download Attached File</a>`;
-                }
-
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                postDiv.innerHTML = `
-                    <button class="btn-delete" onclick="deletePost(${g.id})">Delete</button>
-                    <h3>${g.title || "Untitled"}</h3>
-                    <p style="white-space: pre-wrap;">${g.content || ""}</p>
-                    ${mediaHTML}
-                `;
-                container.appendChild(postDiv);
-            });
-        }
-
-        document.getElementById("postBtn").onclick = async () => {
-            const title = document.getElementById("title").value;
-            const content = document.getElementById("content").value;
-            const file = document.getElementById("image").files[0];
-            const btn = document.getElementById("postBtn");
-            let imageUrl = null;
-
-            if (!title || !content) return alert("Please fill in the title and content.");
-
-            btn.innerText = "Processing...";
-            btn.disabled = true;
-
-            try {
-                if (file) {
-                    const fileName = `${Date.now()}_${file.name}`;
-                    const { error: uploadErr } = await client.storage.from("guide-media").upload(fileName, file);
-                    if (uploadErr) throw uploadErr;
-                    
-                    const { data: urlData } = client.storage.from("guide-media").getPublicUrl(fileName);
-                    imageUrl = urlData.publicUrl;
-                }
-
-                const { error: dbErr } = await client.from("Euides").insert([{ title, content, image_url: imageUrl }]);
-                if (dbErr) throw dbErr;
-
-                location.reload();
-            } catch (err) {
-                alert("Error: " + err.message);
-                btn.innerText = "Post Guide";
-                btn.disabled = false;
-            }
-        };
-
-        window.deletePost = async (id) => {
-    const pass = prompt("Enter password to delete:");
-    
-    if (pass === 'skibidi') {
-        // We add { count: 'exact' } to verify a row was actually removed
-        const { error, count } = await client
-            .from("Euides")
-            .delete({ count: 'exact' })
-            .eq("id", id);
-
-        if (error) {
-            alert("Database Error: " + error.message);
-        } else if (count === 0) {
-            alert("Error: Post found in list but not found in database. Try refreshing.");
-        } else {
-            alert("Successfully deleted from database.");
-            location.reload();
-        }
-    } else if (pass !== null) {
-        alert("Wrong password!");
+        // Load Updates
+        const { data: updates } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
+        const uDiv = document.getElementById("updates");
+        uDiv.innerHTML = "";
+        updates.forEach(u => {
+            uDiv.innerHTML += `<div class="update-item"><button class="btn-delete" onclick="deleteItem('community_updates', ${u.id})">X</button>${u.content}<br><small>${new Date(u.created_at).toLocaleDateString()}</small></div>`;
+        });
     }
-};
-        };
-    </script>
+
+    // Post Guide Logic
+    document.getElementById("postBtn").onclick = async () => {
+        const title = document.getElementById("title").value;
+        const content = document.getElementById("content").value;
+        const file = document.getElementById("fileInput").files[0];
+        let url = null;
+
+        if (file) {
+            const name = `${Date.now()}_${file.name}`;
+            await client.storage.from("guide-media").upload(name, file);
+            url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
+        }
+        await client.from("Euides").insert([{ title, content, image_url: url }]);
+        location.reload();
+    };
+
+    // Post Update Logic (Requires Password)
+    document.getElementById("updateBtn").onclick = async () => {
+        const content = document.getElementById("updateContent").value;
+        const pass = prompt("Enter Password to Post Update:");
+        if (pass === 'skibidi') {
+            await client.from("community_updates").insert([{ content }]);
+            location.reload();
+        } else { alert("Wrong Password!"); }
+    };
+
+    // Shared Delete Logic
+    window.deleteItem = async (table, id) => {
+        const pass = prompt("Enter Password to Delete:");
+        if (pass === 'skibidi') {
+            await client.from(table).delete().eq("id", id);
+            location.reload();
+        } else { alert("Wrong Password!"); }
+    };
+
+    window.onload = loadData;
+</script>
+
 </body>
 </html>
