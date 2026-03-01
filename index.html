@@ -3,153 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides & Updates</title>
+    <title>SOHP Guides - V5 PEACH ANIME</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --bg-img: url('https://images.alphacoders.com/110/thumb-1920-1103783.png');
-            --peach-accent: #ff8e6e;
-            --peach-border: #ffdbc5;
-            --text-main: #5d4a44;
-            --glass: rgba(255, 255, 255, 0.85);
+            --peach: #ff8e6e;
+            --glass: rgba(255, 255, 255, 0.88);
         }
 
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Quicksand', sans-serif; 
-            min-height: 100vh;
-        }
+        body, html { margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; overflow-x: hidden; }
 
-        /* Background Layer */
-        .background-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg-img);
-            background-size: cover;
-            background-position: center;
-            z-index: -1;
-            transition: filter 0.5s ease;
-            filter: blur(8px) brightness(0.9); /* Default Blur */
+        /* Background and Blur Logic */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-img) center/cover no-repeat;
+            z-index: -1; transition: 0.6s ease;
+            filter: blur(10px) brightness(0.8);
         }
-
-        /* When UI is hidden, remove blur */
-        body.hide-ui .background-overlay {
-            filter: blur(0px) brightness(1);
-        }
+        body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
+        body.wallpaper-mode .container { opacity: 0; pointer-events: none; }
 
         .container { 
-            display: flex; 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            padding: 30px; 
-            gap: 25px; 
-            flex-wrap: wrap;
-            transition: opacity 0.4s ease;
+            display: flex; max-width: 1200px; margin: 0 auto; padding: 30px; 
+            gap: 25px; flex-wrap: wrap; transition: 0.4s; 
         }
 
-        body.hide-ui .container {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Layout Columns */
-        .main-content { flex: 2; min-width: 350px; }
-        .sidebar { flex: 1; min-width: 300px; }
-
-        /* Peach Glass Cards */
+        /* Card Styling */
         .card { 
-            background: var(--glass); 
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--peach-border); 
-            border-radius: 20px; 
-            padding: 25px; 
-            margin-bottom: 25px; 
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            position: relative;
-            color: var(--text-main);
+            background: var(--glass); border-radius: 20px; padding: 25px; 
+            margin-bottom: 25px; border: 2px solid #ffdbc5; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        h1, h2 { color: var(--peach-accent); margin-top: 0; text-shadow: 1px 1px 0px white; }
+        h1, h2 { color: var(--peach); margin-top: 0; }
 
+        /* Inputs & Buttons */
         input, textarea { 
-            width: 100%; padding: 12px; margin: 10px 0; 
-            border: 2px solid var(--peach-border); border-radius: 12px; 
-            box-sizing: border-box; background: rgba(255, 252, 251, 0.9);
-            font-family: inherit; outline: none;
+            width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ffdbc5; 
+            border-radius: 12px; box-sizing: border-box; font-family: inherit;
         }
-
         button { 
-            background: var(--peach-accent); color: white; border: none; 
-            padding: 12px; border-radius: 12px; font-weight: bold; 
-            cursor: pointer; width: 100%; transition: 0.3s;
+            background: var(--peach); color: white; border: none; padding: 12px; 
+            border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; 
         }
-        button:hover { transform: scale(1.02); filter: brightness(1.1); }
 
-        /* Fixed Trash Icon */
-        .trash-btn {
+        /* Trash Button Fixed */
+        .delete-btn {
             position: absolute; top: 15px; right: 15px;
-            background: white; border: 1px solid var(--peach-border);
-            border-radius: 50%; width: 30px; height: 30px;
+            background: white; border: 1px solid #ffdbc5; border-radius: 50%;
+            width: 32px; height: 32px; cursor: pointer; color: var(--peach);
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--peach-accent); font-size: 14px;
-            transition: 0.2s; z-index: 5;
+            transition: 0.2s; z-index: 10;
         }
-        .trash-btn:hover { background: #ff8e6e; color: white; }
+        .delete-btn:hover { background: var(--peach); color: white; transform: scale(1.1); }
 
-        /* UI Toggle Button */
-        .ui-toggle {
-            position: fixed; bottom: 20px; right: 20px;
-            background: var(--peach-accent); color: white;
-            padding: 10px 20px; border-radius: 50px;
-            cursor: pointer; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100; border: 2px solid white;
+        /* Toggle UI Button */
+        .toggle-ui {
+            position: fixed; bottom: 25px; right: 25px; z-index: 100;
+            background: var(--peach); color: white; border: 2px solid white;
+            padding: 12px 24px; border-radius: 50px; cursor: pointer; font-weight: bold;
         }
 
-        .download-link {
-            display: inline-block; margin-top: 15px; padding: 10px 18px;
-            background: var(--peach-border); color: var(--text-main);
-            text-decoration: none; border-radius: 12px; font-weight: bold;
-        }
-
+        .main-col { flex: 2; min-width: 350px; }
+        .side-col { flex: 1; min-width: 300px; }
         img { max-width: 100%; border-radius: 15px; margin-top: 15px; border: 3px solid white; }
-        
-        .update-item {
-            background: rgba(255, 250, 250, 0.7); border-left: 5px solid var(--peach-accent);
-            padding: 15px; margin-bottom: 12px; border-radius: 0 12px 12px 0; position: relative;
-        }
     </style>
 </head>
 <body>
 
-<div class="background-overlay"></div>
+    <div class="bg-layer"></div>
+    <button class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')">🖼️ View Wallpaper</button>
 
-<button class="ui-toggle" onclick="toggleUI()">🖼️ Toggle View</button>
-
-<div class="container" id="appUI">
-    <div class="main-content">
-        <h1>🌸 SOHP Guides</h1>
-        <div class="card">
-            <h2>New Guide</h2>
-            <input id="title" placeholder="Guide title">
-            <textarea id="content" placeholder="Instructions..." rows="3"></textarea>
-            <input type="file" id="fileInput">
-            <button id="postBtn">Post Guide ✨</button>
+    <div class="container">
+        <div class="main-col">
+            <h1>🌸 SOHP Guides</h1>
+            <div class="card">
+                <h2>New Guide</h2>
+                <input id="title" placeholder="Guide title">
+                <textarea id="content" placeholder="Content..." rows="3"></textarea>
+                <input type="file" id="fileInput">
+                <button id="postBtn">Post Guide ✨</button>
+            </div>
+            <div id="guides-list">Loading...</div>
         </div>
-        <div id="guides-list">Loading...</div>
-    </div>
 
-    <div class="sidebar">
-        <h2>✨ Updates</h2>
-        <div class="card">
-            <textarea id="upContent" placeholder="Announcement..." rows="2"></textarea>
-            <button id="upBtn" style="background: #5d4a44;">Post Update</button>
+        <div class="side-col">
+            <h2>✨ Updates</h2>
+            <div class="card">
+                <textarea id="upContent" placeholder="Announcement..." rows="2"></textarea>
+                <button id="upBtn" style="background: #5d4a44;">Post Update</button>
+            </div>
+            <div id="updates-list">Loading...</div>
         </div>
-        <div id="updates-list">Loading...</div>
     </div>
-</div>
 
 <script>
     const client = supabase.createClient(
@@ -157,50 +106,27 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
     );
 
-    // Function to hide/show UI
-    function toggleUI() {
-        document.body.classList.toggle('hide-ui');
-        const btn = document.querySelector('.ui-toggle');
-        btn.innerText = document.body.classList.contains('hide-ui') ? "✨ Show UI" : "🖼️ View Wallpaper";
-    }
+    async function load() {
+        const { data: g } = await client.from("Euides").select("*").order("created_at", { ascending: false });
+        const gDiv = document.getElementById("guides-list");
+        gDiv.innerHTML = "";
+        g.forEach(item => {
+            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:#ff8e6e;font-weight:bold;text-decoration:none;display:block;margin-top:10px;">💾 Download File</a>` : "";
+            gDiv.innerHTML += `<div class="card"><div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div><h3>${item.title}</h3><p>${item.content}</p>${media}</div>`;
+        });
 
-    async function loadData() {
-        try {
-            const { data: guides } = await client.from("Euides").select("*").order("created_at", { ascending: false });
-            const gList = document.getElementById("guides-list");
-            gList.innerHTML = "";
-            guides.forEach(g => {
-                let media = g.image_url ? (/\.(jpg|jpeg|png|gif|webp)$/i.test(g.image_url) ? `<img src="${g.image_url}">` : "") + `<br><a href="${g.image_url}" target="_blank" download class="download-link">💾 Download</a>` : "";
-                gList.innerHTML += `
-                    <div class="card">
-                        <div class="trash-btn" onclick="deleteItem('Euides', ${g.id})">🗑️</div>
-                        <h3 style="margin-right:35px">${g.title}</h3>
-                        <p style="white-space: pre-wrap;">${g.content}</p>
-                        ${media}
-                    </div>`;
-            });
-
-            const { data: updates } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-            const uList = document.getElementById("updates-list");
-            uList.innerHTML = "";
-            updates.forEach(u => {
-                uList.innerHTML += `
-                    <div class="update-item">
-                        <div class="trash-btn" onclick="deleteItem('community_updates', ${u.id})" style="width:24px;height:24px;font-size:10px;">🗑️</div>
-                        <p style="margin-right:25px">${u.content}</p>
-                        <small>📅 ${new Date(u.created_at).toLocaleDateString()}</small>
-                    </div>`;
-            });
-        } catch (e) { console.error(e); }
+        const { data: u } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
+        const uDiv = document.getElementById("updates-list");
+        uDiv.innerHTML = "";
+        u.forEach(up => {
+            uDiv.innerHTML += `<div class="card" style="padding:15px;border-left:5px solid #ff8e6e;"><div class="delete-btn" onclick="del('community_updates', ${up.id})" style="width:24px;height:24px;font-size:12px;">🗑️</div><p>${up.content}</p></div>`;
+        });
     }
 
     document.getElementById("postBtn").onclick = async () => {
         const t = document.getElementById("title").value;
         const c = document.getElementById("content").value;
         const f = document.getElementById("fileInput").files[0];
-        if(!t || !c) return alert("Fill out the guide! 🌸");
-        
-        document.getElementById("postBtn").innerText = "Uploading... ✨";
         let url = null;
         if (f) {
             const name = Date.now() + "_" + f.name;
@@ -212,22 +138,20 @@
     };
 
     document.getElementById("upBtn").onclick = async () => {
-        const c = document.getElementById("upContent").value;
-        if(!c) return;
-        if(prompt("Admin Password?") === 'skibidi') {
-            await client.from("community_updates").insert([{ content: c }]);
+        if(prompt("Password?") === 'skibidi') {
+            await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
             location.reload();
-        } else { alert("Wrong! ❌"); }
+        }
     };
 
-    window.deleteItem = async (table, id) => {
-        if(prompt("Password to delete?") === 'skibidi') {
+    window.del = async (table, id) => {
+        if(prompt("Password?") === 'skibidi') {
             await client.from(table).delete().eq("id", id);
             location.reload();
-        } else if (pass !== null) { alert("Incorrect! ❌"); }
+        }
     };
 
-    window.onload = loadData;
+    window.onload = load;
 </script>
 </body>
 </html>
