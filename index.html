@@ -2,14 +2,15 @@
 <html>
 <head>
   <title>SOHP Guides</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
+  
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f8f9fa; }
-    .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
-    .post { background: white; border: 1px solid #e1e4e8; padding: 20px; margin: 20px 0; border-radius: 8px; }
-    input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #d1d5da; border-radius: 6px; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    button:hover { background: #0056b3; }
-    img { max-width: 100%; border-radius: 6px; margin-top: 15px; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f4; }
+    .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 20px 0; border-radius: 8px; }
+    input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    img { max-width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -19,103 +20,73 @@
 <div class="container">
   <h2>Create Guide</h2>
   <input id="title" placeholder="Guide title">
-  <textarea id="content" rows="4" placeholder="Guide content"></textarea>
-  <label>Upload Image:</label>
+  <textarea id="content" placeholder="Guide content"></textarea>
   <input type="file" id="image" accept="image/*">
   <button id="postGuideBtn">Post Guide</button>
 </div>
 
 <h2>All Guides</h2>
-<div id="guides">Loading guides...</div>
-
-<script 
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"
-  onload="startApp()">
-</script>
+<div id="guides">Loading...</div>
 
 <script>
   let supabaseClient;
 
-  // This only runs AFTER the script tag above is fully loaded
-  function startApp() {
-    console.log("Supabase library detected. Initializing client...");
+  // 2. Wrap everything in a window.onload to ensure the CDN is 100% finished
+  window.onload = function() {
+    if (typeof supabase === 'undefined') {
+      alert("Supabase library failed to load. Please check your internet connection or disable ad-blockers.");
+      return;
+    }
+
+    console.log("Supabase successfully detected.");
     
     supabaseClient = supabase.createClient(
       "https://ioruwtajlnnxxqmgxugn.supabase.co", 
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPvfqPgFqPHeV1yUto" 
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
     );
 
     document.getElementById("postGuideBtn").addEventListener("click", createGuide);
     loadGuides();
-  }
+  };
 
   async function createGuide() {
     const title = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
     const imageFile = document.getElementById("image").files[0];
 
-    if (!title || !content) return alert("Please enter both a title and content.");
+    if (!title || !content) return alert("Fill in title and content");
 
     try {
       let imageUrl = null;
-
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `images/${fileName}`;
-
-        let { error: uploadError } = await supabaseClient.storage
-          .from('guide-media')
-          .upload(filePath, imageFile);
-
-        if (uploadError) throw uploadError;
-
-        const { publicURL } = supabaseClient.storage
-          .from('guide-media')
-          .getPublicUrl(filePath);
-        
-        imageUrl = publicURL;
+        const path = `images/${Date.now()}_${imageFile.name}`;
+        await supabaseClient.storage.from("guide-media").upload(path, imageFile);
+        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(path).publicURL;
       }
 
-      const { error } = await supabaseClient
-        .from('Euides')
-        .insert([{ title, content, image_url: imageUrl }]);
-
+      const { error } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
       if (error) throw error;
-
-      alert("Success! Your guide has been posted.");
-      location.reload(); 
+      location.reload();
     } catch (err) {
-      console.error("Error details:", err);
       alert("Error: " + err.message);
     }
   }
 
   async function loadGuides() {
     try {
-      const { data: guides, error } = await supabaseClient
-        .from('Euides')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const { data: guides, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-
+      
       const container = document.getElementById("guides");
-      container.innerHTML = guides.length === 0 ? "No guides found." : "";
-
+      container.innerHTML = "";
       guides.forEach(g => {
         const div = document.createElement("div");
         div.className = "post";
-        div.innerHTML = `
-          <h3>${g.title}</h3>
-          <p>${g.content}</p>
-          ${g.image_url ? `<img src="${g.image_url}">` : ""}
-        `;
+        div.innerHTML = `<h3>${g.title}</h3><p>${g.content}</p>${g.image_url ? `<img src="${g.image_url}">` : ""}`;
         container.appendChild(div);
       });
     } catch (err) {
-      document.getElementById("guides").innerHTML = "Error loading guides.";
-      console.error("Load error:", err);
+      console.error(err);
     }
   }
 </script>
