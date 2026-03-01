@@ -3,58 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V29</title>
-    <link rel="icon" type="image/png" href="https://example.com/your-icon.png">
+    <title>SOHP Guides - Alice Edition</title>
+    <link rel="icon" type="image/png" href="https://static.wikia.nocookie.net/gensin-impact/images/9/9e/Icon_Emoji_Paimon%27s_Paintings_41_Alice_1.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.92); --outline: #cbd5e1; }
 
-        /* The Background Fix */
+        /* The Background Layer */
         #site-bg-layer {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: -9999; /* Furthest back possible */
-            background-color: #222; /* If all else fails, dark gray */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -9999; background-color: #1a1a1a;
+            background-size: cover; background-position: center;
         }
 
         #bg-blur-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            backdrop-filter: blur(25px) brightness(0.7); /* The Blur */
-            background: rgba(0,0,0,0.2); /* Slight tint for readability */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            backdrop-filter: blur(20px) brightness(0.6);
+            background: rgba(0,0,0,0.3);
+            transition: 0.5s ease;
         }
 
-        body { 
-            margin: 0; padding: 0; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            min-height: 100vh;
-            background: transparent !important; /* MUST be transparent for BG to show */
-        }
+        body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
 
-        .main-ui { padding: 40px 20px; position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; }
+        /* Wallpaper Mode: Hide everything when active */
+        body.wallpaper-mode .main-ui, 
+        body.wallpaper-mode h1 { 
+            opacity: 0; pointer-events: none; transform: translateY(20px); 
+        }
+        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: rgba(0,0,0,0); }
+
+        .main-ui { padding: 40px 20px; position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; transition: 0.5s ease; }
         .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px; }
 
-        /* Outlined Cards & Textboxes */
         .card { 
             background: var(--glass); border-radius: 28px; padding: 25px; 
             margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5);
-            position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
+        /* Fixed Outlines */
         input, textarea, select { 
             width: 100%; padding: 14px; margin: 10px 0; 
             border: 2px solid var(--outline); border-radius: 16px; 
-            box-sizing: border-box; font-family: inherit; background: #ffffff;
-            font-size: 14px;
+            box-sizing: border-box; font-family: inherit; background: #fff;
         }
-        input:focus, textarea:focus { border-color: var(--peach); outline: none; }
 
         .delete-x {
             position: absolute; top: 15px; right: 15px; background: #ef4444; color: white;
@@ -63,72 +58,60 @@
             cursor: pointer; z-index: 50; border: none; font-size: 14px;
         }
 
-        .time-tag { font-size: 11px; color: #64748b; font-weight: 700; display: block; margin-bottom: 8px; }
+        .time-tag { font-size: 11px; color: #64748b; font-weight: 800; display: block; margin-bottom: 5px; text-transform: uppercase; }
 
-        /* Media Container */
-        .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid #e2e8f0; }
+        .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid #ddd; }
         .media-box img, .media-box video { width: 100%; display: block; max-height: 450px; object-fit: contain; }
-        
+
         button { background: var(--peach); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,142,110,0.4); }
 
         #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 750px; max-height: 85vh; overflow-y: auto; background: white; z-index: 9999; border-radius: 35px; padding: 35px; display: none; border: 4px solid var(--peach); }
-        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9998; display: none; }
+        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9998; display: none; }
 
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div id="site-bg-layer">
-        <div id="bg-blur-overlay"></div>
-    </div>
+    <div id="site-bg-layer"><div id="bg-blur-overlay"></div></div>
     
-    <div style="position:fixed; bottom:85px; right:25px; background:#1e293b; color:white; width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:100; border:2px solid #fff;" onclick="openAdmin()">⚙️</div>
-    <div style="position:fixed; bottom:25px; right:25px; background:white; color:var(--peach); width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:100; border:2px solid var(--peach); font-size:22px;" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
+    <div style="position:fixed; bottom:85px; right:25px; background:#1e293b; color:white; width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:1000; border:2px solid #fff;" onclick="openAdmin()">⚙️</div>
+    <div style="position:fixed; bottom:25px; right:25px; background:white; color:var(--peach); width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:1000; border:2px solid var(--peach); font-size:22px;" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
 
     <div id="adminOverlay" onclick="closeAdmin()"></div>
     <div id="adminPanel">
         <h2 style="color:var(--peach); margin-top:0;">Staff Dashboard</h2>
-        <textarea id="bcContent" placeholder="Post a broadcast update..."></textarea>
-        <button onclick="postBroadcast()" style="background:#0f172a;">Send Broadcast 📢</button>
+        <textarea id="bcContent" placeholder="Broadcast message..."></textarea>
+        <button onclick="postBroadcast()" style="background:#0f172a;">Post Update 📢</button>
 
-        <hr style="border:0; border-top:1px solid #e2e8f0; margin:30px 0;">
-        <h3>Submissions Queue</h3>
-        <div id="pendingList">Searching for new guides...</div>
+        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+        <div id="pendingList">Queue Loading...</div>
 
-        <hr style="border:0; border-top:1px solid #e2e8f0; margin:30px 0;">
-        <h3>Global Settings</h3>
-        <div id="tagList"></div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <input id="newTagName" placeholder="New Tag Name" style="margin:0;">
-            <button onclick="addTag()" style="width:100px;">Add</button>
-        </div>
-        <input id="bgUrlInput" placeholder="Wallpaper URL (Direct Link)" style="margin-top:20px;">
-        <button onclick="updateWallpaper()" style="background:#475569;">Update Site Background</button>
-        
-        <button onclick="closeAdmin()" style="background:#f1f5f9; color:#475569; margin-top:30px;">Close Dashboard</button>
+        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+        <input id="bgUrlInput" placeholder="New Background Image URL">
+        <button onclick="updateWallpaper()" style="background:#475569; margin-top:10px;">Apply Background</button>
+        <button onclick="closeAdmin()" style="background:#f1f5f9; color:#444; margin-top:20px;">Close</button>
     </div>
 
     <div class="main-ui">
-        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.5); margin-bottom:45px;">🌸 SOHP GUIDES</h1>
+        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6); margin-bottom:45px; transition: 0.5s ease;">🌸 SOHP GUIDES</h1>
         <div class="grid">
-            <div id="left-col">
+            <div>
                 <div class="card" style="border-top: 6px solid var(--peach);">
-                    <h2 style="margin-top:0; color:var(--peach);">Create a Guide</h2>
+                    <h2 style="margin-top:0; color:var(--peach);">Submit Guide</h2>
                     <input id="gTitle" placeholder="Guide Title">
                     <select id="gCat"></select>
-                    <textarea id="gContent" placeholder="Write guide details..." rows="5"></textarea>
+                    <textarea id="gContent" placeholder="Write guide here..." rows="5"></textarea>
                     <input type="file" id="gFile" accept="image/*,video/*">
                     <button onclick="submitGuide()">Submit for Approval ✨</button>
                 </div>
-                <div style="display:flex; gap:10px; margin-bottom:25px;">
-                    <input type="text" id="search" placeholder="Search guides..." onkeyup="filter()" style="margin:0;">
-                    <select id="fCat" onchange="filter()" style="margin:0; width:160px;"></select>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0;">
+                    <select id="fCat" onchange="filter()" style="margin:0; width:150px;"></select>
                 </div>
                 <div id="guides-list"></div>
             </div>
-            <div id="right-col">
+            <div>
                 <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Staff Updates</h2>
                 <div id="updates-list"></div>
             </div>
@@ -139,7 +122,6 @@
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
     let isStaff = false;
 
-    // Relative Time Engine
     function timeAgo(date) {
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
         if (seconds < 60) return "Just now";
@@ -150,7 +132,7 @@
         }
     }
 
-    // Auto-update timestamps every minute
+    // Live update every minute
     setInterval(() => {
         document.querySelectorAll('.time-tag').forEach(tag => {
             if(tag.dataset.ts) tag.innerText = "🕒 " + timeAgo(tag.dataset.ts);
@@ -170,11 +152,8 @@
     }
 
     async function load() {
-        // FORCE BACKGROUND
         const { data: bgData } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-        if (bgData && bgData.value) {
-            document.getElementById('site-bg-layer').style.backgroundImage = `url('${bgData.value}')`;
-        }
+        if (bgData?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bgData.value}')`;
 
         const { data: cats } = await client.from("guide_categories").select("*");
         const f = document.getElementById('fCat'); const p = document.getElementById('gCat');
@@ -189,7 +168,7 @@
                 <span class="time-tag" data-ts="${g.created_at}">🕒 ${timeAgo(g.created_at)}</span>
                 <span style="font-size:10px; font-weight:800; color:var(--peach); text-transform:uppercase;">${g.category}</span>
                 <h3 style="margin:8px 0;">${g.title}</h3>
-                <p style="white-space:pre-wrap; font-size:14px; color:#334155; line-height:1.7;">${g.content}</p>
+                <p style="white-space:pre-wrap; font-size:14px; color:#334; line-height:1.7;">${g.content}</p>
                 ${getMediaHTML(g.image_url)}
             </div>`;
         });
@@ -207,11 +186,11 @@
 
     async function loadAdmin() {
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const pDiv = document.getElementById("pendingList"); pDiv.innerHTML = p?.length ? "" : "No guides pending review.";
+        const pDiv = document.getElementById("pendingList"); pDiv.innerHTML = p?.length ? "" : "No guides pending.";
         p?.forEach(i => {
-            pDiv.innerHTML += `<div style="background:#f8fafc; padding:20px; border-radius:24px; margin-bottom:15px; border:1px solid #e2e8f0;">
+            pDiv.innerHTML += `<div style="background:#f8fafc; padding:20px; border-radius:20px; margin-bottom:15px; border:1px solid #ddd;">
                 <h4 style="margin:0; color:var(--peach);">${i.title}</h4>
-                <div style="font-size:13px; white-space:pre-wrap; background:#fff; padding:15px; border-radius:15px; margin:10px 0; border:1px solid #e2e8f0;">${i.content}</div>
+                <div style="font-size:13px; white-space:pre-wrap; background:#fff; padding:15px; border-radius:12px; margin:10px 0; border:1px solid #ddd;">${i.content}</div>
                 ${getMediaHTML(i.image_url)}
                 <div style="display:flex; gap:10px; margin-top:15px;">
                     <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
@@ -219,14 +198,11 @@
                 </div>
             </div>`;
         });
-        const { data: cats } = await client.from("guide_categories").select("*");
-        const tDiv = document.getElementById("tagList"); tDiv.innerHTML = "";
-        cats?.forEach(c => { tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f1f5f9; padding:10px 15px; border-radius:12px;"><span>${c.name}</span><span style="color:red; cursor:pointer; font-weight:800;" onclick="safeDelete('guide_categories', ${c.id})">×</span></div>`; });
     }
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
-        if(!t || !c) return alert("Please enter a title and content.");
+        if(!t || !c) return alert("Missing fields.");
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
@@ -234,12 +210,11 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false}]);
-        alert("Submitted for review!"); location.reload();
+        alert("Sent for review!"); location.reload();
     }
 
     async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); load(); loadAdmin(); }
     async function postBroadcast() { await client.from("community_updates").insert([{content: document.getElementById("bcContent").value}]); location.reload(); }
-    async function addTag() { await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); load(); loadAdmin(); }
     async function updateWallpaper() { await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
     
     function filter() {
