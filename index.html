@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V8 Search & Mobile</title>
+    <title>SOHP Guides - V9 Categories</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
@@ -25,23 +25,15 @@
         body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
         body.wallpaper-mode .container { opacity: 0; pointer-events: none; }
 
-        .container { 
-            display: flex; max-width: 1000px; margin: 0 auto; padding: 20px; 
-            gap: 25px; flex-direction: row; justify-content: center; transition: 0.4s; 
-        }
+        .container { display: flex; max-width: 1000px; margin: 0 auto; padding: 20px; gap: 25px; transition: 0.4s; }
 
         .main-col { flex: 2; width: 100%; max-width: 650px; }
         .side-col { flex: 1; width: 100%; max-width: 350px; }
 
-        /* SEARCH BAR STYLE */
-        .search-container { margin-bottom: 20px; }
-        #searchBar {
-            background: var(--glass);
-            border: 2px solid var(--peach);
-            font-size: 16px;
-            padding: 12px 20px;
-            box-shadow: 0 4px 15px rgba(255, 142, 110, 0.2);
-        }
+        /* Filter Controls */
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        #searchBar { flex: 2; min-width: 200px; }
+        #filterCategory { flex: 1; min-width: 120px; }
 
         @media (max-width: 768px) {
             .container { flex-direction: column; align-items: center; padding: 15px; }
@@ -55,8 +47,19 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); box-sizing: border-box;
         }
 
+        /* Tag Badge */
+        .tag-badge {
+            display: inline-block; background: var(--peach); color: white;
+            padding: 4px 10px; border-radius: 8px; font-size: 12px;
+            font-weight: bold; margin-bottom: 10px;
+        }
+
         h1, h2 { color: var(--peach); margin-top: 0; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; box-sizing: border-box; font-family: inherit; }
+        input, textarea, select { 
+            width: 100%; padding: 12px; margin: 10px 0; 
+            border: 2px solid var(--border); border-radius: 12px; 
+            box-sizing: border-box; font-family: inherit; background: white;
+        }
         
         button { 
             background: var(--peach); color: white; border: none; padding: 12px; 
@@ -66,63 +69,67 @@
 
         .toggle-ui {
             position: fixed; bottom: 20px; right: 20px; z-index: 100;
-            background: rgba(255, 255, 255, 0.4); color: white; border: 1px solid white;
-            width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
+            background: rgba(255, 255, 255, 0.4); width: 50px; height: 50px; 
+            border-radius: 50%; cursor: pointer; border: 1px solid white;
             display: flex; align-items: center; justify-content: center; font-size: 24px;
-            backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
         }
 
         .delete-btn {
             position: absolute; top: 12px; right: 12px;
             background: white; border: 1px solid var(--border); border-radius: 50%;
             width: 30px; height: 30px; cursor: pointer; color: var(--peach);
-            display: flex; align-items: center; justify-content: center; z-index: 10;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        img { max-width: 100%; border-radius: 15px; margin-top: 15px; border: 3px solid white; display: block; margin: 15px auto; }
-        .update-item { border-left: 5px solid var(--peach); padding-left: 15px; margin-bottom: 15px; position: relative; }
-        
-        /* Hidden class for search */
+        img { max-width: 100%; border-radius: 15px; margin: 15px auto; display: block; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="bg-layer" id="bg"></div>
-    <button class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')" title="View Full Wallpaper">👁️</button>
+    <button class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</button>
 
     <div class="container">
         <div class="main-col">
             <h1>🌸 SOHP Guides</h1>
             
-            <div class="search-container">
-                <input type="text" id="searchBar" placeholder="🔍 Search guides..." onkeyup="filterGuides()">
+            <div class="controls">
+                <input type="text" id="searchBar" placeholder="🔍 Search..." onkeyup="runFilters()">
+                <select id="filterCategory" onchange="runFilters()">
+                    <option value="All">All Categories</option>
+                    <option value="General">General</option>
+                    <option value="Tutorial">Tutorial</option>
+                    <option value="Important">Important</option>
+                </select>
             </div>
 
             <div class="card">
                 <h2>New Guide</h2>
                 <input id="title" placeholder="Guide title">
+                <select id="postCategory">
+                    <option value="General">General</option>
+                    <option value="Tutorial">Tutorial</option>
+                    <option value="Important">Important</option>
+                </select>
                 <textarea id="content" placeholder="Content..." rows="3"></textarea>
                 <input type="file" id="fileInput">
                 <button id="postBtn">Post Guide ✨</button>
             </div>
             
-            <div id="guides-list">Loading guides...</div>
+            <div id="guides-list">Loading...</div>
         </div>
 
         <div class="side-col">
             <h2>✨ Updates</h2>
             <div class="card">
-                <textarea id="upContent" placeholder="New announcement..." rows="2"></textarea>
+                <textarea id="upContent" placeholder="Announcement..." rows="2"></textarea>
                 <button id="upBtn" style="background: #5d4a44; margin-bottom: 20px;">Post Update</button>
-                
-                <div style="border-top: 1px dashed var(--border); padding-top: 15px;">
-                    <h3 style="font-size: 14px; color: var(--peach); margin-bottom: 5px;">Wallpaper URL</h3>
-                    <input id="bgUrl" placeholder="Image link...">
-                    <button onclick="changeBackground()" style="background: #aaa; font-size: 12px; padding: 8px;">Update BG</button>
-                </div>
+                <input id="bgUrl" placeholder="Wallpaper URL">
+                <button onclick="changeBackground()" style="background: #aaa; font-size: 12px;">Set BG</button>
             </div>
-            <div id="updates-list">Loading...</div>
+            <div id="updates-list"></div>
         </div>
     </div>
 
@@ -132,19 +139,21 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
     );
 
-    // SEARCH LOGIC
-    function filterGuides() {
+    function runFilters() {
         const query = document.getElementById('searchBar').value.toLowerCase();
+        const category = document.getElementById('filterCategory').value;
         const guides = document.querySelectorAll('#guides-list .card');
         
-        guides.forEach(guide => {
-            const title = guide.querySelector('h3').innerText.toLowerCase();
-            const content = guide.querySelector('p').innerText.toLowerCase();
-            if (title.includes(query) || content.includes(query)) {
-                guide.classList.remove('hidden');
-            } else {
-                guide.classList.add('hidden');
-            }
+        guides.forEach(g => {
+            const t = g.querySelector('h3').innerText.toLowerCase();
+            const c = g.querySelector('p').innerText.toLowerCase();
+            const gCat = g.getAttribute('data-category');
+            
+            const matchesSearch = t.includes(query) || c.includes(query);
+            const matchesCat = (category === "All" || gCat === category);
+            
+            if (matchesSearch && matchesCat) g.classList.remove('hidden');
+            else g.classList.add('hidden');
         });
     }
 
@@ -156,10 +165,11 @@
         const gDiv = document.getElementById("guides-list");
         gDiv.innerHTML = "";
         g.forEach(item => {
-            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach);font-weight:bold;text-decoration:none;font-size:13px;display:block;text-align:center;">💾 Download File</a>` : "";
+            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach);font-weight:bold;text-decoration:none;font-size:13px;display:block;text-align:center;">💾 Download</a>` : "";
             gDiv.innerHTML += `
-                <div class="card">
+                <div class="card" data-category="${item.category || 'General'}">
                     <div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div>
+                    <span class="tag-badge">${item.category || 'General'}</span>
                     <h3 style="margin-right:35px;">${item.title}</h3>
                     <p style="white-space: pre-wrap;">${item.content}</p>
                     ${media}
@@ -174,17 +184,9 @@
         });
     }
 
-    async function changeBackground() {
-        const url = document.getElementById('bgUrl').value;
-        if (!url) return;
-        if (prompt("Password?") === 'skibidi') {
-            await client.from("site_settings").upsert({ id: "wallpaper", value: url });
-            location.reload();
-        }
-    }
-
     document.getElementById("postBtn").onclick = async () => {
         const t = document.getElementById("title").value;
+        const cat = document.getElementById("postCategory").value;
         const c = document.getElementById("content").value;
         const f = document.getElementById("fileInput").files[0];
         if(!t || !c) return alert("Fill out the guide! 🌸");
@@ -195,20 +197,21 @@
             await client.storage.from("guide-media").upload(name, f);
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
-        await client.from("Euides").insert([{ title: t, content: c, image_url: url }]);
+        await client.from("Euides").insert([{ title: t, content: c, image_url: url, category: cat }]);
         location.reload();
     };
 
-    document.getElementById("upBtn").onclick = async () => {
+    async function changeBackground() {
+        const url = document.getElementById('bgUrl').value;
         if(prompt("Password?") === 'skibidi') {
-            await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
+            await client.from("site_settings").upsert({ id: "wallpaper", value: url });
             location.reload();
         }
-    };
+    }
 
-    window.del = async (table, id) => {
+    window.del = async (t, id) => {
         if(prompt("Password?") === 'skibidi') {
-            await client.from(table).delete().eq("id", id);
+            await client.from(t).delete().eq("id", id);
             location.reload();
         }
     };
