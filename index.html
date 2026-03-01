@@ -7,27 +7,17 @@
     
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; justify-content: center; }
-        .container { display: flex; width: 100%; max-width: 1200px; padding: 20px; gap: 20px; }
-        
-        /* Main Section */
-        .main-content { flex: 2; }
-        /* Sidebar Section */
+        .container { display: flex; width: 100%; max-width: 1200px; padding: 20px; gap: 20px; flex-wrap: wrap; }
+        .main-content { flex: 2; min-width: 350px; }
         .sidebar { flex: 1; min-width: 300px; }
-
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 10px; position: relative; }
-        
-        /* Update specific style */
-        .update-item { font-size: 14px; border-left: 4px solid #1877f2; padding: 10px; margin-bottom: 10px; background: #f9f9f9; position: relative; }
-
+        .update-item { font-size: 14px; border-left: 4px solid #1877f2; padding: 10px; margin-bottom: 10px; background: #f9f9f9; position: relative; word-wrap: break-word; }
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         button { background: #1877f2; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        
-        .btn-download { background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 13px; margin-top: 10px; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 3px 7px; border-radius: 4px; cursor: pointer; position: absolute; top: 10px; right: 10px; font-size: 10px; }
-        
-        img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
-        h1, h2 { color: #1c1e21; }
+        .btn-download { background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 13px; margin-top: 10px; font-weight: bold; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 3px 7px; border-radius: 4px; cursor: pointer; position: absolute; top: 10px; right: 10px; font-size: 10px; z-index: 10; }
+        img { max-width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -42,16 +32,16 @@
             <input type="file" id="fileInput">
             <button id="postBtn">Post Guide</button>
         </div>
-        <div id="guides">Loading Guides...</div>
+        <div id="guides">Connecting to database...</div>
     </div>
 
     <div class="sidebar">
         <h2>Community Updates</h2>
         <div class="card">
             <textarea id="updateContent" placeholder="New announcement..." rows="2"></textarea>
-            <button id="updateBtn" style="background: #333;">Post Update</button>
+            <button id="updateBtn" style="background: #333;">Post Update (Password)</button>
         </div>
-        <div id="updates">Loading Updates...</div>
+        <div id="updates">Loading...</div>
     </div>
 </div>
 
@@ -62,31 +52,47 @@
     );
 
     async function loadData() {
-        // Load Guides
-        const { data: guides } = await client.from("Euides").select("*").order("created_at", { ascending: false });
-        const gDiv = document.getElementById("guides");
-        gDiv.innerHTML = "";
-        guides.forEach(g => {
-            let media = g.image_url ? (/\.(jpg|jpeg|png|gif)$/i.test(g.image_url) ? `<img src="${g.image_url}">` : "") + `<br><a href="${g.image_url}" class="btn-download">Download File</a>` : "";
-            gDiv.innerHTML += `<div class="post"><button class="btn-delete" onclick="deleteItem('Euides', ${g.id})">X</button><h3>${g.title}</h3><p>${g.content}</p>${media}</div>`;
-        });
+        try {
+            // Load Guides
+            const { data: guides, error: gErr } = await client.from("Euides").select("*").order("created_at", { ascending: false });
+            if (gErr) throw new Error("Guides Table: " + gErr.message);
+            
+            const gDiv = document.getElementById("guides");
+            gDiv.innerHTML = guides.length ? "" : "No guides found.";
+            guides.forEach(g => {
+                let media = "";
+                if (g.image_url) {
+                    const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(g.image_url);
+                    media = isImg ? `<img src="${g.image_url}">` : "";
+                    media += `<br><a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download File</a>`;
+                }
+                gDiv.innerHTML += `<div class="post"><button class="btn-delete" onclick="deleteItem('Euides', ${g.id})">Delete</button><h3>${g.title || 'No Title'}</h3><p>${g.content || ''}</p>${media}</div>`;
+            });
 
-        // Load Updates
-        const { data: updates } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-        const uDiv = document.getElementById("updates");
-        uDiv.innerHTML = "";
-        updates.forEach(u => {
-            uDiv.innerHTML += `<div class="update-item"><button class="btn-delete" onclick="deleteItem('community_updates', ${u.id})">X</button>${u.content}<br><small>${new Date(u.created_at).toLocaleDateString()}</small></div>`;
-        });
+            // Load Updates
+            const { data: updates, error: uErr } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
+            if (uErr) throw new Error("Updates Table: " + uErr.message);
+            
+            const uDiv = document.getElementById("updates");
+            uDiv.innerHTML = updates.length ? "" : "No updates yet.";
+            updates.forEach(u => {
+                uDiv.innerHTML += `<div class="update-item"><button class="btn-delete" onclick="deleteItem('community_updates', ${u.id})">X</button>${u.content}<br><small style="color:#888">${new Date(u.created_at).toLocaleDateString()}</small></div>`;
+            });
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById("guides").innerHTML = "<b style='color:red'>Connection Error:</b> " + err.message;
+        }
     }
 
-    // Post Guide Logic
     document.getElementById("postBtn").onclick = async () => {
         const title = document.getElementById("title").value;
         const content = document.getElementById("content").value;
         const file = document.getElementById("fileInput").files[0];
+        if (!title || !content) return alert("Fill out title and content!");
+        
+        document.getElementById("postBtn").innerText = "Uploading...";
         let url = null;
-
         if (file) {
             const name = `${Date.now()}_${file.name}`;
             await client.storage.from("guide-media").upload(name, file);
@@ -96,27 +102,26 @@
         location.reload();
     };
 
-    // Post Update Logic (Requires Password)
     document.getElementById("updateBtn").onclick = async () => {
         const content = document.getElementById("updateContent").value;
-        const pass = prompt("Enter Password to Post Update:");
+        if (!content) return;
+        const pass = prompt("Enter Password:");
         if (pass === 'skibidi') {
             await client.from("community_updates").insert([{ content }]);
             location.reload();
-        } else { alert("Wrong Password!"); }
+        } else if (pass !== null) { alert("Wrong Password!"); }
     };
 
-    // Shared Delete Logic
     window.deleteItem = async (table, id) => {
         const pass = prompt("Enter Password to Delete:");
         if (pass === 'skibidi') {
-            await client.from(table).delete().eq("id", id);
-            location.reload();
-        } else { alert("Wrong Password!"); }
+            const { error } = await client.from(table).delete().eq("id", id);
+            if (error) alert(error.message);
+            else location.reload();
+        } else if (pass !== null) { alert("Wrong Password!"); }
     };
 
     window.onload = loadData;
 </script>
-
 </body>
 </html>
