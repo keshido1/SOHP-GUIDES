@@ -30,10 +30,10 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // Initialize Supabase AFTER CDN is loaded
+  // ✅ Initialize Supabase AFTER CDN loads
   const supabase = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your Supabase URL
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
   );
 
   // Function to create a guide
@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let videoUrl = null;
 
     try {
-      // Upload image if exists
+      // Upload image if selected
       if (imageFile) {
         const { data: imageData, error: imageError } = await supabase
           .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
@@ -55,7 +55,7 @@ window.addEventListener("DOMContentLoaded", () => {
         imageUrl = supabase.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
       }
 
-      // Upload video if exists
+      // Upload video if selected
       if (videoFile) {
         const { data: videoData, error: videoError } = await supabase
           .storage.from("guide-media").upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
@@ -63,7 +63,7 @@ window.addEventListener("DOMContentLoaded", () => {
         videoUrl = supabase.storage.from("guide-media").getPublicUrl(videoData.path).data.publicUrl;
       }
 
-      // Insert guide into table
+      // Insert guide into Supabase table
       const { data, error } = await supabase
         .from("guides")
         .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }]);
@@ -94,6 +94,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const container = document.getElementById("guides");
       container.innerHTML = "";
+
       data.forEach(g => {
         const div = document.createElement("div");
         div.className = "post";
@@ -119,4 +120,5 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 
 </body>
+</html>
 </html>
