@@ -7,7 +7,7 @@
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
     .post { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
-    img, video { max-width: 100%; margin-top: 10px; }
+    img { max-width: 100%; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -20,8 +20,6 @@
 
 <label>Upload Image:</label>
 <input type="file" id="image" accept="image/*"><br><br>
-<label>Upload Video:</label>
-<input type="file" id="video" accept="video/*"><br><br>
 
 <button id="postGuideBtn">Post Guide</button>
 
@@ -30,10 +28,11 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // Initialize Supabase client
-  const supabaseClient = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
+  // Correct v2 CDN initialization
+  const { createClient } = window.supabase;
+  const supabaseClient = createClient(
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your URL
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
   );
 
   // Function to create a guide
@@ -41,10 +40,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const title = document.getElementById("title").value;
     const content = document.getElementById("content").value;
     const imageFile = document.getElementById("image").files[0];
-    const videoFile = document.getElementById("video").files[0];
 
     let imageUrl = null;
-    let videoUrl = null;
 
     try {
       // Upload image if selected
@@ -55,25 +52,16 @@ window.addEventListener("DOMContentLoaded", () => {
         imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
       }
 
-      // Upload video if selected
-      if (videoFile) {
-        const { data: videoData, error: videoError } = await supabaseClient
-          .storage.from("guide-media").upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
-        if (videoError) throw videoError;
-        videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(videoData.path).data.publicUrl;
-      }
-
-      // Insert guide into Supabase table
+      // Insert into Euides table
       const { data, error } = await supabaseClient
-        .from("guides")
-        .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }]);
+        .from("Euides")
+        .insert([{ title, content, image_url: imageUrl }]);
       if (error) throw error;
 
       // Clear inputs
       document.getElementById("title").value = "";
       document.getElementById("content").value = "";
       document.getElementById("image").value = "";
-      document.getElementById("video").value = "";
 
       // Reload guides
       loadGuides();
@@ -87,7 +75,7 @@ window.addEventListener("DOMContentLoaded", () => {
   async function loadGuides() {
     try {
       const { data, error } = await supabaseClient
-        .from("euides")
+        .from("Euides")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -102,7 +90,6 @@ window.addEventListener("DOMContentLoaded", () => {
           <h3>${g.title}</h3>
           <p>${g.content}</p>
           ${g.image_url ? `<img src="${g.image_url}">` : ""}
-          ${g.video_url ? `<video src="${g.video_url}" controls></video>` : ""}
         `;
         container.appendChild(div);
       });
@@ -111,7 +98,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Attach button event listener
+  // Attach event listener to button
   document.getElementById("postGuideBtn").addEventListener("click", createGuide);
 
   // Load guides on page load
