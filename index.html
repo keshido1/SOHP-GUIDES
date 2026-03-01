@@ -28,18 +28,23 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // Correct v2 CDN initialization
+  // ✅ Correct v2 CDN initialization
   const { createClient } = window.supabase;
   const supabaseClient = createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your URL
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your Supabase URL
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
   );
 
   // Function to create a guide
   async function createGuide() {
-    const title = document.getElementById("title").value;
-    const content = document.getElementById("content").value;
+    const title = document.getElementById("title").value.trim();
+    const content = document.getElementById("content").value.trim();
     const imageFile = document.getElementById("image").files[0];
+
+    if (!title || !content) {
+      alert("Please enter a title and content");
+      return;
+    }
 
     let imageUrl = null;
 
@@ -49,10 +54,11 @@ window.addEventListener("DOMContentLoaded", () => {
         const { data: imageData, error: imageError } = await supabaseClient
           .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
         if (imageError) throw imageError;
+
         imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
       }
 
-      // Insert into Euides table
+      // Insert guide into Euides table
       const { data, error } = await supabaseClient
         .from("Euides")
         .insert([{ title, content, image_url: imageUrl }]);
@@ -89,7 +95,7 @@ window.addEventListener("DOMContentLoaded", () => {
         div.innerHTML = `
           <h3>${g.title}</h3>
           <p>${g.content}</p>
-          ${g.image_url ? `<img src="${g.image_url}">` : ""}
+          ${g.image_url ? `<img src="${g.image_url}" />` : ""}
         `;
         container.appendChild(div);
       });
@@ -98,7 +104,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Attach event listener to button
+  // Attach event listener to the button
   document.getElementById("postGuideBtn").addEventListener("click", createGuide);
 
   // Load guides on page load
