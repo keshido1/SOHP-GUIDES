@@ -2,34 +2,58 @@
 <html>
 <head>
   <title>SOHP Guides</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; }
-    .post { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    .post { border: 1px solid #ccc; padding: 10px; margin: 15px 0; }
+    img { max-width: 100%; }
   </style>
 </head>
 <body>
 
 <h1>SOHP Guides</h1>
 
-<h2>Create a Guide</h2>
-<input type="text" id="title" placeholder="Guide Title"><br><br>
-<textarea id="content" placeholder="Write your guide..."></textarea><br><br>
-<button onclick="createPost()">Post Guide</button>
+<h2>Create Guide</h2>
+<input id="title" placeholder="Guide title"><br><br>
+<textarea id="content" placeholder="Guide content"></textarea><br><br>
+<input type="file" id="image"><br><br>
+<button onclick="createGuide()">Post Guide</button>
 
-<h2>Guides</h2>
-<div id="posts"></div>
+<h2>All Guides</h2>
+<div id="guides"></div>
 
 <script>
-function createPost() {
+const supabase = supabase.createClient(
+  "YOUR_SUPABASE_URL",
+  "YOUR_SUPABASE_ANON_KEY"
+);
+
+async function createGuide() {
   const title = document.getElementById("title").value;
   const content = document.getElementById("content").value;
 
-  const postDiv = document.createElement("div");
-  postDiv.className = "post";
-  postDiv.innerHTML = "<h3>" + title + "</h3><p>" + content + "</p>";
+  const { data, error } = await supabase
+    .from("guides")
+    .insert([{ title, content }]);
 
-  document.getElementById("posts").appendChild(postDiv);
+  if (error) alert(error.message);
+  loadGuides();
 }
+
+async function loadGuides() {
+  const { data } = await supabase.from("guides").select("*").order("created_at", { ascending: false });
+
+  document.getElementById("guides").innerHTML = "";
+
+  data.forEach(g => {
+    const div = document.createElement("div");
+    div.className = "post";
+    div.innerHTML = `<h3>${g.title}</h3><p>${g.content}</p>`;
+    document.getElementById("guides").appendChild(div);
+  });
+}
+
+loadGuides();
 </script>
 
 </body>
