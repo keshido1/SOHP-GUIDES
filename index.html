@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>SOHP Guides</title>
-  <!-- Supabase v1 CDN -->
+  <!-- ✅ Supabase v1 CDN MUST load before your script -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
@@ -32,16 +32,17 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
+  // ✅ Supabase client ready after CDN loads
   const supabaseClient = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // your Supabase URL
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // your anon key
   );
 
   const previewContainer = document.getElementById("preview");
   const imageInput = document.getElementById("image");
   const videoInput = document.getElementById("video");
 
-  // Live preview for guides
+  // Live preview for guide media
   imageInput.addEventListener("change", () => {
     previewContainer.innerHTML = "";
     const file = imageInput.files[0];
@@ -150,7 +151,7 @@ window.addEventListener("DOMContentLoaded", () => {
         `;
         container.appendChild(div);
 
-        // Load comments for this guide
+        // Load comments
         const { data: comments } = await supabaseClient.from("Ecomments")
           .select("*")
           .eq("guide_id", g.id)
@@ -167,7 +168,6 @@ window.addEventListener("DOMContentLoaded", () => {
           commentContainer.appendChild(cDiv);
         });
 
-        // Add event listener for comment button
         document.getElementById(`comment-btn-${g.id}`).addEventListener("click", () => {
           const textInput = document.getElementById(`comment-text-${g.id}`);
           const fileInput = document.getElementById(`comment-file-${g.id}`);
