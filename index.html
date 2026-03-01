@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V26</title>
+    <title>SOHP Guides - V27</title>
     <link rel="icon" type="image/png" href="https://example.com/your-icon.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -11,24 +11,20 @@
     <style>
         :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); --outline: #d1d5db; }
 
-        /* FIX: Ensure background logic is the very first thing rendered */
+        /* FIXED: Background Layering */
         html, body { 
             margin: 0; padding: 0; 
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
-            background: #1a1a1a !important; /* Safety dark fallback */
+            background: #111 !important; /* Base fallback */
         }
 
-        .bg-viewport { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
+        .bg-viewport { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; overflow: hidden; }
         .bg-layer { 
-            position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background-size: cover; background-position: center;
-            filter: blur(30px) brightness(0.7); 
-        }
-        .edge-glow {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: -1;
-            box-shadow: inset 0 0 120px 40px rgba(255, 255, 255, 0.4);
+            filter: blur(25px) brightness(0.6); 
+            transform: scale(1.1); /* Prevents white edges during blur */
         }
 
         .main-ui { padding: 40px 20px; position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
@@ -38,39 +34,38 @@
             background: var(--glass); border-radius: 24px; padding: 25px; 
             margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.8);
             position: relative; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
 
-        /* The New Red X Button */
         .delete-x {
-            position: absolute; top: 15px; right: 15px;
-            background: #ff4d4d; color: white;
-            width: 22px; height: 22px; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: 800; cursor: pointer;
-            transition: 0.2s; opacity: 0.6; z-index: 10;
+            position: absolute; top: 15px; right: 15px; background: #ff4d4d; color: white;
+            width: 24px; height: 24px; border-radius: 8px; display: flex; 
+            align-items: center; justify-content: center; font-weight: 800; 
+            cursor: pointer; z-index: 20; border: none;
         }
-        .delete-x:hover { opacity: 1; transform: scale(1.1); }
+
+        .time-tag { font-size: 11px; color: #999; font-weight: 600; display: block; margin-bottom: 5px; }
 
         input, textarea, select { 
             width: 100%; padding: 14px; margin: 10px 0; 
             border: 2px solid var(--outline); border-radius: 14px; 
             box-sizing: border-box; font-family: inherit; background: #fff;
         }
-        button { background: var(--peach); color: white; border: none; padding: 15px; border-radius: 14px; font-weight: 800; cursor: pointer; width: 100%; }
-
-        .media-container { margin-top: 15px; border-radius: 15px; overflow: hidden; background: #000; }
-        .media-container img, .media-container video { width: 100%; display: block; max-height: 450px; object-fit: contain; }
-
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 700px; max-height: 85vh; overflow-y: auto; background: white; z-index: 1001; border-radius: 30px; padding: 30px; display: none; border: 4px solid var(--peach); }
-        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; }
         
+        /* Media & Buttons */
+        .media-box { margin-top: 15px; border-radius: 15px; overflow: hidden; background: #000; border: 1px solid #eee; }
+        .media-box img, .media-box video { width: 100%; display: block; max-height: 400px; object-fit: contain; }
+        .dl-link { display: inline-block; margin-top: 10px; color: var(--peach); text-decoration: none; font-size: 12px; font-weight: 800; border: 1px solid var(--peach); padding: 6px 12px; border-radius: 8px; }
+
+        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 750px; max-height: 85vh; overflow-y: auto; background: white; z-index: 1001; border-radius: 30px; padding: 30px; display: none; border: 4px solid var(--peach); }
+        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; }
+
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <div class="bg-viewport"><div class="bg-layer" id="bg"></div></div>
-    <div class="edge-glow"></div>
     
     <div style="position:fixed; bottom:85px; right:25px; background:#222; color:white; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:100; border:2px solid #fff;" onclick="openAdmin()">⚙️</div>
     <div style="position:fixed; bottom:25px; right:25px; background:white; color:var(--peach); width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:100; border:2px solid var(--peach); font-size:20px;" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
@@ -78,28 +73,29 @@
     <div id="adminOverlay" onclick="closeAdmin()"></div>
     <div id="adminPanel">
         <h2 style="color:var(--peach); margin-top:0;">Staff Dashboard</h2>
-        
-        <h3>Broadcasting</h3>
-        <textarea id="bcContent" placeholder="Post a new update..."></textarea>
-        <button onclick="postBroadcast()" style="background:#111;">Send Broadcast 📢</button>
+        <textarea id="bcContent" placeholder="Post a new broadcast..."></textarea>
+        <button onclick="postBroadcast()" style="background:#111; color:white; padding:15px; border-radius:14px; width:100%; border:none; font-weight:800; cursor:pointer;">Send Broadcast 📢</button>
 
         <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
         <h3>Review Queue</h3>
-        <div id="pendingList">Loading...</div>
+        <div id="pendingList">Loading guides...</div>
 
         <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
-        <h3>Tags & Background</h3>
+        <h3>Tags & Settings</h3>
         <div id="tagList"></div>
-        <input id="newTagName" placeholder="New Tag Name" style="margin-top:10px;">
-        <button onclick="addTag()" style="padding:10px; margin-bottom:15px;">Add Tag</button>
-        <input id="bgUrlInput" placeholder="Wallpaper URL">
-        <button onclick="changeBackground()" style="background:#444;">Update Site BG</button>
-
-        <button onclick="closeAdmin()" style="background:#eee; color:#666; margin-top:25px;">Close Panel</button>
+        <div style="display:flex; gap:5px; margin-top:10px;">
+            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
+            <button onclick="addTag()" style="width:80px; background:var(--peach); color:white; border:none; border-radius:10px;">Add</button>
+        </div>
+        <input id="bgUrlInput" placeholder="Wallpaper Image Link" style="margin-top:15px;">
+        <button onclick="changeBackground()" style="background:#444; color:white; border:none; padding:12px; border-radius:12px; width:100%; margin-top:5px; cursor:pointer;">Update Background</button>
+        
+        <button onclick="closeAdmin()" style="background:#eee; color:#666; margin-top:25px; width:100%; padding:10px; border-radius:10px; border:none; cursor:pointer;">Close</button>
+        <div style="font-size:10px; color:#ccc; text-align:right; margin-top:10px;">V.27.0.1 • DISCRETE</div>
     </div>
 
     <div class="main-ui">
-        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 15px rgba(0,0,0,0.4);">🌸 SOHP GUIDES</h1>
+        <h1 style="color:white; text-align:center; font-size:2.5rem; text-shadow:0 4px 15px rgba(0,0,0,0.4); margin-bottom:40px;">🌸 SOHP GUIDES</h1>
         <div class="grid">
             <div>
                 <div class="card" style="border-top: 5px solid var(--peach);">
@@ -107,12 +103,12 @@
                     <input id="gTitle" placeholder="Guide Title">
                     <select id="gCat"></select>
                     <textarea id="gContent" placeholder="Write guide here..." rows="4"></textarea>
-                    <input type="file" id="gFile">
-                    <button onclick="submitGuide()">Submit for Approval ✨</button>
+                    <input type="file" id="gFile" accept="image/*,video/*">
+                    <button onclick="submitGuide()" style="background:var(--peach); color:white; border:none; padding:15px; border-radius:14px; font-weight:800; width:100%; cursor:pointer;">Submit for Approval ✨</button>
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0;">
-                    <select id="fCat" onchange="filter()" style="margin:0; width:140px;"></select>
+                    <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0; border:2px solid #fff;">
+                    <select id="fCat" onchange="filter()" style="margin:0; width:140px; border:2px solid #fff;"></select>
                 </div>
                 <div id="guides"></div>
             </div>
@@ -127,11 +123,32 @@
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
     let isStaff = false;
 
-    function checkPass() { if(prompt("Staff Password?") === 'skibidi') return true; alert("Wrong password."); return false; }
+    function timeAgo(date) {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return "Just now";
+    }
+
+    function checkPass() { if(prompt("Staff Password?") === 'skibidi') return true; alert("Access Denied."); return false; }
     function openAdmin() { if(!isStaff) { if(checkPass()) isStaff = true; else return; } document.getElementById('adminPanel').style.display = 'block'; document.getElementById('adminOverlay').style.display = 'block'; loadAdmin(); }
     function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('adminOverlay').style.display = 'none'; }
-
     async function safeDelete(table, id) { if(checkPass()) { await client.from(table).delete().eq("id", id); location.reload(); } }
+
+    function getMediaBlock(url) {
+        if(!url) return "";
+        const isVid = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov');
+        return `<div class="media-box">${isVid ? `<video controls src="${url}"></video>` : `<img src="${url}">`}</div>
+                <a href="${url}" download class="dl-link">Download Attachment 📥</a>`;
+    }
 
     async function load() {
         const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
@@ -145,13 +162,13 @@
         const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", {ascending: false});
         const gDiv = document.getElementById("guides"); gDiv.innerHTML = "";
         gs?.forEach(g => {
-            let media = g.image_url ? `<div class="media-container">${g.image_url.includes('mp4') ? `<video controls src="${g.image_url}"></video>` : `<img src="${g.image_url}">`}</div><a href="${g.image_url}" download class="card" style="display:inline-block; padding:5px 10px; margin-top:10px; text-decoration:none; font-size:10px;">Download File</a>` : "";
             gDiv.innerHTML += `<div class="card" data-cat="${g.category}">
                 <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
+                <span class="time-tag">🕒 ${timeAgo(g.created_at)}</span>
                 <span style="font-size:10px; font-weight:800; color:var(--peach); text-transform:uppercase;">${g.category}</span>
                 <h3 style="margin:5px 0;">${g.title}</h3>
-                <p style="white-space:pre-wrap; font-size:14px; color:#444;">${g.content}</p>
-                ${media}
+                <p style="white-space:pre-wrap; font-size:14px; color:#444; line-height:1.6;">${g.content}</p>
+                ${getMediaBlock(g.image_url)}
             </div>`;
         });
 
@@ -160,26 +177,29 @@
         us?.forEach(u => {
             uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:5px solid var(--peach);">
                 <div class="delete-x" onclick="safeDelete('community_updates', ${u.id})">×</div>
-                <div style="font-size:10px; color:#999;">📅 ${new Date(u.created_at).toLocaleDateString()}</div>
-                <p style="margin:5px 0 0 0; font-size:14px;">${u.content}</p>
+                <div class="time-tag">🕒 ${timeAgo(u.created_at)}</div>
+                <p style="margin:0; font-size:14px;">${u.content}</p>
             </div>`;
         });
     }
 
     async function loadAdmin() {
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const pDiv = document.getElementById("pendingList"); pDiv.innerHTML = p?.length ? "" : "No pending guides.";
+        const pDiv = document.getElementById("pendingList"); pDiv.innerHTML = p?.length ? "" : "Queue empty.";
         p?.forEach(i => {
-            pDiv.innerHTML += `<div style="background:#f9fafb; padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid #eee;">
-                <h4 style="margin:0;">${i.title}</h4>
-                <div style="font-size:12px; white-space:pre-wrap; margin:10px 0;">${i.content}</div>
-                <button onclick="approve(${i.id})" style="background:#2ecc71; padding:10px; width:auto; margin-right:5px;">Approve</button>
-                <button onclick="safeDelete('Euides', ${i.id})" style="background:#ff4d4d; padding:10px; width:auto;">Reject</button>
+            pDiv.innerHTML += `<div style="background:#f8fafc; padding:20px; border-radius:20px; margin-bottom:15px; border:1px solid #eee;">
+                <h4 style="margin:0; color:var(--peach);">${i.title}</h4>
+                <div style="font-size:13px; white-space:pre-wrap; background:#fff; padding:15px; border-radius:12px; margin:10px 0; border:1px solid #eee;">${i.content}</div>
+                ${getMediaBlock(i.image_url)}
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button onclick="approve(${i.id})" style="background:#2ecc71; color:white; border:none; padding:10px; border-radius:10px; flex:1; cursor:pointer;">Approve</button>
+                    <button onclick="safeDelete('Euides', ${i.id})" style="background:#ff4d4d; color:white; border:none; padding:10px; border-radius:10px; flex:1; cursor:pointer;">Reject</button>
+                </div>
             </div>`;
         });
         const { data: cats } = await client.from("guide_categories").select("*");
         const tDiv = document.getElementById("tagList"); tDiv.innerHTML = "";
-        cats?.forEach(c => { tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${c.name}</span><button onclick="safeDelete('guide_categories', ${c.id})" style="width:30px; padding:2px; background:red;">×</button></div>`; });
+        cats?.forEach(c => { tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:#f1f5f9; padding:5px 10px; border-radius:8px;"><span>${c.name}</span><span style="color:red; cursor:pointer;" onclick="safeDelete('guide_categories', ${c.id})">×</span></div>`; });
     }
 
     async function submitGuide() {
@@ -192,7 +212,7 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false}]);
-        alert("Submitted!"); location.reload();
+        alert("Sent to staff!"); location.reload();
     }
 
     async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); load(); loadAdmin(); }
