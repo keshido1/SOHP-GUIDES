@@ -3,98 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V16 Stable</title>
+    <title>SOHP Guides - V17 Force Visible</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { 
-            --peach: #ff8e6e; 
-            --glass: rgba(255, 255, 255, 0.98); 
-            --bg-fallback: #1a1a1a;
-        }
+        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); }
 
-        /* Prevent black screen: set a fallback background color */
+        /* Force visibility from the start */
         body { 
             margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-fallback); color: #1a1a1a; min-height: 100vh;
+            background: #1a1a1a; color: #1a1a1a; min-height: 100vh;
+            display: block !important; opacity: 1 !important;
         }
 
         .bg-layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-size: cover; background-position: center; z-index: -1; 
-            filter: blur(20px) brightness(0.4); background-color: var(--bg-fallback);
+            filter: blur(15px) brightness(0.4); background-color: #1a1a1a;
         }
         
-        body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
-        body.wallpaper-mode .main-content, body.wallpaper-mode .admin-trigger { opacity: 0 !important; pointer-events: none; }
+        /* Wallpaper mode only hides the content if you click the eye */
+        body.wallpaper-mode .main-ui, body.wallpaper-mode .admin-trigger { display: none; }
+        body.wallpaper-mode .bg-layer { filter: none; brightness: 1; }
 
-        .main-content { padding: 40px 20px; opacity: 1; transition: opacity 0.5s ease; }
+        .main-ui { padding: 40px 20px; position: relative; z-index: 1; }
         .container { display: flex; max-width: 1200px; margin: 0 auto; gap: 30px; flex-wrap: wrap; }
 
-        h1 { font-size: 3rem; color: white; text-align: center; text-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 40px; }
+        h1 { font-size: 3rem; color: white; text-align: center; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
         .card { 
             background: var(--glass); border-radius: 24px; padding: 25px; 
-            margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.3); 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); position: relative;
+            margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+            position: relative; border: 1px solid rgba(255,255,255,0.3);
         }
 
         .tag-badge { background: var(--peach); color: white; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
 
-        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 14px; font-family: inherit; }
+        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ddd; border-radius: 14px; box-sizing: border-box; }
         button { background: var(--peach); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; }
         
-        /* Floating Admin Buttons */
-        .admin-trigger { position: fixed; bottom: 90px; right: 25px; background: #333; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid white; font-size: 22px; }
+        .admin-trigger { position: fixed; bottom: 90px; right: 25px; background: #333; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid white; }
         .toggle-ui { position: fixed; bottom: 25px; right: 25px; background: white; color: var(--peach); width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid var(--peach); font-size: 24px; }
 
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 550px; max-height: 80vh; overflow-y: auto; background: white; z-index: 1001; border-radius: 30px; padding: 30px; display: none; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
-        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; }
+        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 550px; max-height: 80vh; overflow-y: auto; background: white; z-index: 1001; border-radius: 30px; padding: 30px; display: none; border: 3px solid var(--peach); }
+        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; }
 
-        .cat-row { display: flex; justify-content: space-between; background: #f9f9f9; padding: 10px 15px; border-radius: 12px; margin: 5px 0; border: 1px solid #eee; }
-        .hidden { display: none !important; }
-        
         @media (max-width: 800px) { .container { flex-direction: column; } }
     </style>
 </head>
 <body>
 
     <div class="bg-layer" id="bg"></div>
+    
     <div class="admin-trigger" onclick="openAdmin()">⚙️</div>
     <div class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
 
     <div id="adminOverlay" onclick="closeAdmin()"></div>
     <div id="adminPanel">
-        <h2 style="color:var(--peach); margin-top:0;">Staff Controls</h2>
-        <div class="card" style="box-shadow:none; background:#f5f5f5;">
-            <h3>Submissions</h3>
-            <div id="pendingList">Loading...</div>
-        </div>
-        <div class="card" style="box-shadow:none; background:#f5f5f5;">
-            <h3>Tags & Categories</h3>
+        <h2 style="color:var(--peach); margin-top:0;">Admin Panel</h2>
+        <div class="card" style="box-shadow:none; background:#f9f9f9;">
+            <h3>Submissions & Tags</h3>
+            <div id="pendingList">Checking...</div>
+            <hr>
             <div id="catManager"></div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <input id="newTagName" placeholder="Tag Name" style="margin:0;">
-                <button onclick="addTag()" style="width:80px;">Add</button>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <input id="newTagName" placeholder="New tag" style="margin:0;">
+                <button onclick="addTag()" style="width:70px;">Add</button>
             </div>
         </div>
-        <div class="card" style="box-shadow:none; background:#f5f5f5;">
-            <h3>Broadcast & Wallpaper</h3>
-            <input id="bgUrl" placeholder="New Wallpaper URL">
-            <button onclick="changeBackground()" style="background:#555;">Update BG</button>
-            <textarea id="upContent" placeholder="New Broadcast..." style="margin-top:10px;"></textarea>
-            <button onclick="postUpdate()" style="background:#222;">Post Update</button>
+        <div class="card" style="box-shadow:none; background:#f9f9f9;">
+            <h3>Update Wallpaper</h3>
+            <input id="bgUrl" placeholder="Image URL">
+            <button onclick="changeBackground()" style="background:#444;">Apply</button>
         </div>
-        <button onclick="closeAdmin()" style="background:#ddd; color:#333;">Close</button>
+        <button onclick="closeAdmin()" style="background:#eee; color:#333;">Close</button>
     </div>
 
-    <div class="main-content" id="mainUI">
+    <div class="main-ui">
         <h1>🌸 SOHP GUIDES</h1>
         <div class="container">
             <div style="flex:2; min-width:320px;">
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <input type="text" id="searchBar" placeholder="Search guides..." onkeyup="runFilters()" style="margin:0;">
+                    <input type="text" id="searchBar" placeholder="Search..." onkeyup="runFilters()" style="margin:0;">
                     <select id="filterCategory" onchange="runFilters()" style="margin:0; width:150px;"></select>
                 </div>
                 <div id="guides-list">Loading guides...</div>
@@ -103,13 +94,14 @@
                     <h3>Submit a Guide</h3>
                     <input id="guideTitle" placeholder="Title">
                     <select id="postCategory"></select>
-                    <textarea id="guideContent" placeholder="Content..." rows="5"></textarea>
+                    <textarea id="guideContent" placeholder="Content..." rows="4"></textarea>
                     <input type="file" id="guideFile">
-                    <button onclick="submitGuide()">Submit for Review ✨</button>
+                    <button onclick="submitGuide()">Submit Review ✨</button>
                 </div>
             </div>
+            
             <div style="flex:1; min-width:300px;">
-                <h2 style="color:white; text-align:left; text-shadow:0 2px 10px rgba(0,0,0,0.5);">✨ Broadcasts</h2>
+                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">✨ Broadcasts</h2>
                 <div id="updates-list"></div>
             </div>
         </div>
@@ -117,16 +109,16 @@
 
 <script>
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
-    let adminMode = false;
+    let adminUnlocked = false;
 
     function openAdmin() {
-        if(!adminMode) {
-            if(prompt("Admin Password?") === 'skibidi') adminMode = true;
+        if(!adminUnlocked) {
+            if(prompt("Pass?") === 'skibidi') adminUnlocked = true;
             else return;
         }
         document.getElementById('adminPanel').style.display = 'block';
         document.getElementById('adminOverlay').style.display = 'block';
-        loadAdminData();
+        loadAdmin();
     }
     function closeAdmin() {
         document.getElementById('adminPanel').style.display = 'none';
@@ -134,38 +126,48 @@
     }
 
     async function load() {
+        // Wallpaper
         try {
-            // Wallpaper with fallback
             const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
             if (bg) document.getElementById('bg').style.backgroundImage = `url('${bg.value}')`;
-            
-            // Tags
-            const { data: cats } = await client.from("guide_categories").select("*");
-            const f = document.getElementById('filterCategory');
-            const p = document.getElementById('postCategory');
-            f.innerHTML = '<option value="All">All Tags</option>';
-            p.innerHTML = '';
-            if(cats) cats.forEach(c => {
-                f.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-                p.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-            });
+        } catch(e) {}
 
-            // Approved Guides
-            const { data: g } = await client.from("Euides").select("*").eq("approved", true).order("created_at", { ascending: false });
-            const gDiv = document.getElementById("guides-list");
-            gDiv.innerHTML = (g && g.length) ? "" : "<div class='card'>No guides posted yet.</div>";
-            if(g) g.forEach(item => {
-                let img = item.image_url ? `<img src="${item.image_url}" style="width:100%; border-radius:15px; margin-top:15px;">` : "";
-                gDiv.innerHTML += `<div class="card" data-category="${item.category}"><span class="tag-badge">${item.category || 'General'}</span><h3>${item.title}</h3><p style="white-space:pre-wrap;">${item.content}</p>${img}</div>`;
-            });
+        // Tags
+        const { data: cats } = await client.from("guide_categories").select("*");
+        const f = document.getElementById('filterCategory');
+        const p = document.getElementById('postCategory');
+        f.innerHTML = '<option value="All">All Tags</option>'; p.innerHTML = '';
+        if(cats) cats.forEach(c => {
+            f.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            p.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
 
-            // Broadcasts
-            const { data: u } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-            const uDiv = document.getElementById("updates-list");
-            uDiv.innerHTML = "";
-            if(u) u.forEach(up => { uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:6px solid var(--peach);"><p>${up.content}</p></div>`; });
+        // Guides
+        const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", { ascending: false });
+        const gDiv = document.getElementById("guides-list");
+        gDiv.innerHTML = (gs && gs.length) ? "" : "<div class='card'>No guides yet!</div>";
+        if(gs) gs.forEach(g => {
+            let img = g.image_url ? `<img src="${g.image_url}" style="width:100%; border-radius:15px; margin-top:15px;">` : "";
+            gDiv.innerHTML += `<div class="card" data-category="${g.category}"><span class="tag-badge">${g.category || 'General'}</span><h3>${g.title}</h3><p style="white-space:pre-wrap;">${g.content}</p>${img}</div>`;
+        });
 
-        } catch (e) { console.error("Load failed", e); }
+        // Updates
+        const { data: us } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
+        const uDiv = document.getElementById("updates-list");
+        uDiv.innerHTML = "";
+        if(us) us.forEach(u => { uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:6px solid var(--peach);"><p>${u.content}</p></div>`; });
+    }
+
+    async function loadAdmin() {
+        const { data: p } = await client.from("Euides").select("*").eq("approved", false);
+        const pDiv = document.getElementById("pendingList");
+        pDiv.innerHTML = (p && p.length) ? "" : "No pending.";
+        if(p) p.forEach(i => { pDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${i.title}</span><div><button onclick="approve(${i.id})" style="padding:2px 8px; width:auto; background:green;">✅</button> <button onclick="del('Euides', ${i.id})" style="padding:2px 8px; width:auto; background:red;">🗑️</button></div></div>`; });
+
+        const { data: cats } = await client.from("guide_categories").select("*");
+        const cDiv = document.getElementById("catManager");
+        cDiv.innerHTML = "";
+        if(cats) cats.forEach(c => { cDiv.innerHTML += `<div style="display:flex; justify-content:space-between;"><span>${c.name}</span><span onclick="delCat(${c.id})" style="color:red; cursor:pointer;">Remove</span></div>`; });
     }
 
     async function submitGuide() {
@@ -173,7 +175,7 @@
         const c = document.getElementById("guideContent").value;
         const cat = document.getElementById("postCategory").value;
         const f = document.getElementById("guideFile").files[0];
-        if(!t || !c) return alert("Fill out the title and content!");
+        if(!t || !c) return alert("Fill fields!");
         let url = null;
         if (f) {
             const name = Date.now() + "_" + f.name;
@@ -181,52 +183,24 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{ title: t, content: c, image_url: url, category: cat, approved: false }]);
-        alert("Sent for approval! 🌸");
-        location.reload();
+        alert("Submitted!"); location.reload();
     }
 
-    async function loadAdminData() {
-        const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const pDiv = document.getElementById("pendingList");
-        pDiv.innerHTML = (p && p.length) ? "" : "No pending guides.";
-        if(p) p.forEach(item => { pDiv.innerHTML += `<div class="cat-row"><span>${item.title}</span><div><button onclick="approve(${item.id})" style="padding:4px 8px; background:#4CAF50; width:auto;">✅</button> <button onclick="del('Euides', ${item.id})" style="padding:4px 8px; background:#ff4d4d; width:auto; margin-left:5px;">🗑️</button></div></div>`; });
+    async function approve(id) { await client.from("Euides").update({ approved: true }).eq("id", id); load(); loadAdmin(); }
+    async function delCat(id) { if(confirm("Delete?")) { await client.from("guide_categories").delete().eq("id", id); load(); loadAdmin(); } }
+    async function addTag() { const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{ name: n }]); load(); loadAdmin(); } }
+    async function changeBackground() { await client.from("site_settings").upsert({ id: "wallpaper", value: document.getElementById('bgUrl').value }); location.reload(); }
+    window.del = async (t, id) => { if(confirm("Delete?")) { await client.from(t).delete().eq("id", id); load(); loadAdmin(); } };
 
-        const { data: cats } = await client.from("guide_categories").select("*");
-        const cMan = document.getElementById("catManager");
-        cMan.innerHTML = "";
-        if(cats) cats.forEach(c => { cMan.innerHTML += `<div class="cat-row"><span>${c.name}</span><span style="color:red; cursor:pointer;" onclick="deleteTag(${c.id})">Remove</span></div>`; });
-    }
-
-    async function addTag() {
-        const n = document.getElementById('newTagName').value;
-        if(n) { await client.from("guide_categories").insert([{ name: n }]); load(); loadAdminData(); }
-    }
-    async function deleteTag(id) {
-        if(confirm("Delete tag?")) { await client.from("guide_categories").delete().eq("id", id); load(); loadAdminData(); }
-    }
-    async function approve(id) {
-        await client.from("Euides").update({ approved: true }).eq("id", id);
-        load(); loadAdminData();
-    }
-    async function postUpdate() {
-        await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
-        location.reload();
-    }
-    async function changeBackground() {
-        await client.from("site_settings").upsert({ id: "wallpaper", value: document.getElementById('bgUrl').value });
-        location.reload();
-    }
-    window.del = async (t, id) => {
-        if(confirm("Delete?")) { await client.from(t).delete().eq("id", id); location.reload(); }
-    };
     function runFilters() {
         const q = document.getElementById('searchBar').value.toLowerCase();
         const cat = document.getElementById('filterCategory').value;
         document.querySelectorAll('#guides-list .card').forEach(g => {
             const match = (g.innerText.toLowerCase().includes(q)) && (cat === "All" || g.dataset.category === cat);
-            g.classList.toggle('hidden', !match);
+            g.style.display = match ? 'block' : 'none';
         });
     }
+
     window.onload = load;
 </script>
 </body>
