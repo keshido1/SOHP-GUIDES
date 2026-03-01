@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V6</title>
+    <title>SOHP Guides - V8 Search & Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --peach: #ff8e6e;
-            --glass: rgba(255, 255, 255, 0.88);
+            --glass: rgba(255, 255, 255, 0.9);
             --border: #ffdbc5;
         }
 
         body, html { margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-        /* Background and Blur Logic */
         .bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -26,12 +25,34 @@
         body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
         body.wallpaper-mode .container { opacity: 0; pointer-events: none; }
 
-        .container { display: flex; max-width: 1200px; margin: 0 auto; padding: 30px; gap: 25px; flex-wrap: wrap; transition: 0.4s; }
+        .container { 
+            display: flex; max-width: 1000px; margin: 0 auto; padding: 20px; 
+            gap: 25px; flex-direction: row; justify-content: center; transition: 0.4s; 
+        }
+
+        .main-col { flex: 2; width: 100%; max-width: 650px; }
+        .side-col { flex: 1; width: 100%; max-width: 350px; }
+
+        /* SEARCH BAR STYLE */
+        .search-container { margin-bottom: 20px; }
+        #searchBar {
+            background: var(--glass);
+            border: 2px solid var(--peach);
+            font-size: 16px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 15px rgba(255, 142, 110, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; align-items: center; padding: 15px; }
+            .main-col, .side-col { max-width: 100%; }
+            h1, h2 { text-align: center; }
+        }
 
         .card { 
             background: var(--glass); border-radius: 20px; padding: 25px; 
             margin-bottom: 25px; border: 2px solid var(--border); position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); box-sizing: border-box;
         }
 
         h1, h2 { color: var(--peach); margin-top: 0; }
@@ -41,30 +62,28 @@
             background: var(--peach); color: white; border: none; padding: 12px; 
             border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s;
         }
-        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        button:hover { filter: brightness(1.1); }
 
-        /* Discrete UI Toggle */
         .toggle-ui {
             position: fixed; bottom: 20px; right: 20px; z-index: 100;
-            background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
-            backdrop-filter: blur(5px); transition: 0.3s;
+            background: rgba(255, 255, 255, 0.4); color: white; border: 1px solid white;
+            width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .toggle-ui:hover { background: var(--peach); border-color: white; }
 
         .delete-btn {
-            position: absolute; top: 15px; right: 15px;
+            position: absolute; top: 12px; right: 12px;
             background: white; border: 1px solid var(--border); border-radius: 50%;
             width: 30px; height: 30px; cursor: pointer; color: var(--peach);
             display: flex; align-items: center; justify-content: center; z-index: 10;
         }
 
-        .main-col { flex: 2; min-width: 350px; }
-        .side-col { flex: 1; min-width: 300px; }
-        img { max-width: 100%; border-radius: 15px; margin-top: 15px; border: 3px solid white; }
+        img { max-width: 100%; border-radius: 15px; margin-top: 15px; border: 3px solid white; display: block; margin: 15px auto; }
+        .update-item { border-left: 5px solid var(--peach); padding-left: 15px; margin-bottom: 15px; position: relative; }
         
-        .bg-config { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border); }
+        /* Hidden class for search */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -75,6 +94,11 @@
     <div class="container">
         <div class="main-col">
             <h1>🌸 SOHP Guides</h1>
+            
+            <div class="search-container">
+                <input type="text" id="searchBar" placeholder="🔍 Search guides..." onkeyup="filterGuides()">
+            </div>
+
             <div class="card">
                 <h2>New Guide</h2>
                 <input id="title" placeholder="Guide title">
@@ -82,6 +106,7 @@
                 <input type="file" id="fileInput">
                 <button id="postBtn">Post Guide ✨</button>
             </div>
+            
             <div id="guides-list">Loading guides...</div>
         </div>
 
@@ -89,12 +114,12 @@
             <h2>✨ Updates</h2>
             <div class="card">
                 <textarea id="upContent" placeholder="New announcement..." rows="2"></textarea>
-                <button id="upBtn" style="background: #5d4a44; margin-bottom: 10px;">Post Update</button>
+                <button id="upBtn" style="background: #5d4a44; margin-bottom: 20px;">Post Update</button>
                 
-                <div class="bg-config">
-                    <h3 style="font-size: 14px; color: var(--peach);">Change Wallpaper</h3>
-                    <input id="bgUrl" placeholder="Paste image URL here...">
-                    <button onclick="changeBackground()" style="background: #aaa; font-size: 12px; padding: 8px;">Update Background</button>
+                <div style="border-top: 1px dashed var(--border); padding-top: 15px;">
+                    <h3 style="font-size: 14px; color: var(--peach); margin-bottom: 5px;">Wallpaper URL</h3>
+                    <input id="bgUrl" placeholder="Image link...">
+                    <button onclick="changeBackground()" style="background: #aaa; font-size: 12px; padding: 8px;">Update BG</button>
                 </div>
             </div>
             <div id="updates-list">Loading...</div>
@@ -107,17 +132,31 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
     );
 
+    // SEARCH LOGIC
+    function filterGuides() {
+        const query = document.getElementById('searchBar').value.toLowerCase();
+        const guides = document.querySelectorAll('#guides-list .card');
+        
+        guides.forEach(guide => {
+            const title = guide.querySelector('h3').innerText.toLowerCase();
+            const content = guide.querySelector('p').innerText.toLowerCase();
+            if (title.includes(query) || content.includes(query)) {
+                guide.classList.remove('hidden');
+            } else {
+                guide.classList.add('hidden');
+            }
+        });
+    }
+
     async function load() {
-        // Fetch Wallpaper
         const { data: bgData } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
         if (bgData) document.getElementById('bg').style.backgroundImage = `url('${bgData.value}')`;
 
-        // Fetch Guides
-        const { data: guides } = await client.from("Euides").select("*").order("created_at", { ascending: false });
+        const { data: g } = await client.from("Euides").select("*").order("created_at", { ascending: false });
         const gDiv = document.getElementById("guides-list");
         gDiv.innerHTML = "";
-        guides.forEach(item => {
-            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach);font-weight:bold;text-decoration:none;font-size:13px;display:block;margin-top:10px;">💾 Download File</a>` : "";
+        g.forEach(item => {
+            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach);font-weight:bold;text-decoration:none;font-size:13px;display:block;text-align:center;">💾 Download File</a>` : "";
             gDiv.innerHTML += `
                 <div class="card">
                     <div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div>
@@ -127,11 +166,10 @@
                 </div>`;
         });
 
-        // Fetch Updates
-        const { data: updates } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
+        const { data: u } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
         const uDiv = document.getElementById("updates-list");
         uDiv.innerHTML = "";
-        updates.forEach(up => {
+        u.forEach(up => {
             uDiv.innerHTML += `<div class="card" style="padding:15px; border-left: 5px solid var(--peach);"><div class="delete-btn" onclick="del('community_updates', ${up.id})" style="width:24px;height:24px;font-size:10px;">🗑️</div><p>${up.content}</p></div>`;
         });
     }
@@ -139,10 +177,9 @@
     async function changeBackground() {
         const url = document.getElementById('bgUrl').value;
         if (!url) return;
-        if (prompt("Password to change wallpaper?") === 'skibidi') {
-            const { error } = await client.from("site_settings").upsert({ id: "wallpaper", value: url });
-            if (error) alert("Error: " + error.message);
-            else location.reload();
+        if (prompt("Password?") === 'skibidi') {
+            await client.from("site_settings").upsert({ id: "wallpaper", value: url });
+            location.reload();
         }
     }
 
@@ -163,14 +200,14 @@
     };
 
     document.getElementById("upBtn").onclick = async () => {
-        if(prompt("Password to post update?") === 'skibidi') {
+        if(prompt("Password?") === 'skibidi') {
             await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
             location.reload();
         }
     };
 
     window.del = async (table, id) => {
-        if(prompt("Password to delete?") === 'skibidi') {
+        if(prompt("Password?") === 'skibidi') {
             await client.from(table).delete().eq("id", id);
             location.reload();
         }
