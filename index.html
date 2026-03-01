@@ -2,8 +2,6 @@
 <html>
 <head>
   <title>SOHP Guides</title>
-  <!-- Supabase v1 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
   <style>
     body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
     .post, .comment { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
@@ -30,31 +28,33 @@
 <h2>All Guides</h2>
 <div id="guides"></div>
 
+<!-- Load Supabase v1 CDN LAST -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
 <script>
-  // ✅ Wait for supabase to exist
+  // Wait until supabase is loaded
   function waitForSupabase() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (window.supabase) return resolve();
       const interval = setInterval(() => {
         if (window.supabase) {
           clearInterval(interval);
           resolve();
         }
-      }, 50); // check every 50ms
+      }, 50);
     });
   }
 
   waitForSupabase().then(() => {
     const supabaseClient = supabase.createClient(
-      "https://ioruwtajlnnxxqmgxugn.supabase.co", // your Supabase URL
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // your anon key
+      "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your URL
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
     );
 
     const previewContainer = document.getElementById("preview");
     const imageInput = document.getElementById("image");
     const videoInput = document.getElementById("video");
 
-    // Live preview
+    // Live preview for guides
     imageInput.addEventListener("change", () => {
       previewContainer.innerHTML = "";
       const file = imageInput.files[0];
@@ -74,7 +74,6 @@
       }
     });
 
-    // Create guide
     async function createGuide() {
       const title = document.getElementById("title").value.trim();
       const content = document.getElementById("content").value.trim();
@@ -90,13 +89,13 @@
           const { data, error } = await supabaseClient.storage.from("guide-media")
             .upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
           if (error) throw error;
-          imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
+          imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
         }
         if (videoFile) {
           const { data, error } = await supabaseClient.storage.from("guide-media")
             .upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
           if (error) throw error;
-          videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
+          videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
         }
 
         const { error } = await supabaseClient.from("Euides")
@@ -116,7 +115,6 @@
       }
     }
 
-    // Post comment
     async function postComment(guideId, textInput, fileInput) {
       const text = textInput.value.trim();
       const file = fileInput.files[0];
@@ -128,7 +126,7 @@
           const { data, error } = await supabaseClient.storage.from("guide-media")
             .upload(`comments/${Date.now()}_${file.name}`, file);
           if (error) throw error;
-          imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.key).publicURL;
+          imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(data.Key || data.key).publicURL;
         }
         const { error } = await supabaseClient.from("Ecomments")
           .insert([{ guide_id: guideId, text, image_url: imageUrl }]);
@@ -140,7 +138,6 @@
       }
     }
 
-    // Load guides + comments
     async function loadGuides() {
       try {
         const { data: guides, error } = await supabaseClient.from("Euides")
@@ -198,6 +195,5 @@
     loadGuides();
   });
 </script>
-
 </body>
 </html>
