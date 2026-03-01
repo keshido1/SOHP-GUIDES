@@ -3,13 +3,16 @@
 <head>
   <title>SOHP Guides</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/1.35.6/supabase.js"></script>
+  
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #f0f2f5; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 8px; }
-    input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    button { background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    img { max-width: 100%; margin-top: 10px; border-radius: 5px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f0f2f5; }
+    .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    .post { background: white; border: 1px solid #e1e4e8; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #d1d5da; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+    button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; }
+    button:hover { background: #0056b3; }
+    img { max-width: 100%; border-radius: 8px; margin-top: 15px; }
+    #status-msg { font-weight: bold; color: #666; margin-top: 10px; text-align: center; }
   </style>
 </head>
 <body>
@@ -19,27 +22,28 @@
 <div class="card">
   <h2>Create Guide</h2>
   <input id="title" placeholder="Guide title">
-  <textarea id="content" placeholder="Write your guide here..." rows="4"></textarea>
+  <textarea id="content" rows="4" placeholder="What's on your mind?"></textarea>
+  <label>Add Image:</label>
   <input type="file" id="image" accept="image/*">
-  <button id="postBtn">Post to Public</button>
+  <button id="postBtn">Post Publicly</button>
+  <div id="status-msg"></div>
 </div>
 
-<h2>Recent Guides</h2>
-<div id="guides">Checking connection...</div>
+<hr>
+<h2>Community Guides</h2>
+<div id="guides">Connecting to Supabase...</div>
 
 <script>
   let supabaseClient;
 
-  // This check is now even more aggressive
-  function checkSupabase() {
-    if (typeof supabase !== 'undefined') {
-      initApp();
-    } else {
-      document.getElementById("guides").innerHTML = "<b style='color:red'>Library Blocked. Try opening this site on your phone's data or a different WiFi.</b>";
+  // This function triggers as soon as the library is ready
+  window.onload = function() {
+    if (typeof supabase === 'undefined') {
+      document.getElementById("guides").innerHTML = "<div style='color:red; background:white; padding:20px; border-radius:8px;'><b>BLOCK DETECTED:</b> Your network is blocking the Supabase library. <br><br>1. Disable Ad-blockers.<br>2. Try a different browser.<br>3. Try using your phone's mobile data hotspot.</div>";
+      return;
     }
-  }
 
-  function initApp() {
+    // Initializing the client
     supabaseClient = supabase.createClient(
       "https://ioruwtajlnnxxqmgxugn.supabase.co", 
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
@@ -47,31 +51,36 @@
 
     document.getElementById("postBtn").onclick = createGuide;
     loadGuides();
-  }
+  };
 
   async function createGuide() {
     const title = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
     const file = document.getElementById("image").files[0];
+    const status = document.getElementById("status-msg");
 
-    if (!title || !content) return alert("Please fill in the title and content.");
+    if (!title || !content) return alert("Please fill out both title and content!");
 
+    status.innerText = "Uploading...";
+    
     try {
       let imageUrl = null;
       if (file) {
         const path = `public/${Date.now()}_${file.name}`;
-        const { error: uploadErr } = await supabaseClient.storage.from("guide-media").upload(path, file);
-        if (uploadErr) throw uploadErr;
+        const { error: uploadError } = await supabaseClient.storage.from("guide-media").upload(path, file);
+        if (uploadError) throw uploadError;
+        
         const { publicURL } = supabaseClient.storage.from("guide-media").getPublicUrl(path);
         imageUrl = publicURL;
       }
 
-      const { error: insertErr } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
-      if (insertErr) throw insertErr;
+      const { error: insertError } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
+      if (insertError) throw insertError;
 
-      alert("Guide shared with everyone!");
+      status.innerText = "Success!";
       location.reload();
     } catch (e) {
+      status.innerText = "Error!";
       alert("Post failed: " + e.message);
     }
   }
@@ -82,8 +91,12 @@
       if (error) throw error;
 
       const container = document.getElementById("guides");
-      container.innerHTML = data.length === 0 ? "No guides yet." : "";
+      if (data.length === 0) {
+        container.innerHTML = "No guides found. Be the first to post!";
+        return;
+      }
 
+      container.innerHTML = "";
       data.forEach(g => {
         const div = document.createElement("div");
         div.className = "post";
@@ -91,12 +104,9 @@
         container.appendChild(div);
       });
     } catch (e) {
-      document.getElementById("guides").innerHTML = "Database Error: " + e.message;
+      document.getElementById("guides").innerHTML = "Connection Error: " + e.message;
     }
   }
-
-  // Start the check
-  window.onload = checkSupabase;
 </script>
 </body>
 </html>
