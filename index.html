@@ -1,140 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="https://static.wikia.nocookie.net/gensin-impact/images/9/9e/Icon_Emoji_Paimon%27s_Paintings_41_Alice_1.png/revision/latest/scale-to-width-down/250?cb=20250528172355">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V23 Perfect Blur</title>
+    <title>SOHP Guides - V24 Responsive Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); }
+        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.95); }
 
-        /* Remove Black Background entirely */
         html, body { 
             margin: 0; padding: 0; 
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
-            background: transparent !important;
-            overflow-x: hidden;
+            background: #1a1a1a !important;
         }
 
-        /* Fixed Background System */
+        /* Fixed Background & Blur */
         .bg-viewport {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
-            background: #222; /* Fallback only if no image loads */
         }
-
         .bg-layer { 
-            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; 
+            position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; 
             background-size: cover; background-position: center;
-            filter: blur(30px) brightness(0.7); /* Deep blur effect */
-            transition: filter 0.5s ease;
+            filter: blur(25px) brightness(0.6);
         }
-
-        /* White Edge Glow Layer */
         .edge-glow {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: -1;
-            box-shadow: inset 0 0 120px 30px rgba(255, 255, 255, 0.25);
+            box-shadow: inset 0 0 100px 20px rgba(255, 255, 255, 0.2);
         }
 
-        body.wallpaper-mode .bg-layer { filter: blur(0px) brightness(1); }
-        body.wallpaper-mode .main-ui, body.wallpaper-mode .edge-glow { opacity: 0; pointer-events: none; }
+        /* Main Layout */
+        .main-ui { padding: 40px 20px; position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; align-items: start; }
 
-        .main-ui { padding: 40px 20px; position: relative; z-index: 1; transition: opacity 0.3s; }
-        .container { display: flex; max-width: 1200px; margin: 0 auto; gap: 30px; flex-wrap: wrap; }
-        h1 { font-size: 3.2rem; color: white; text-align: center; text-shadow: 0 4px 25px rgba(0,0,0,0.4); margin-bottom: 40px; font-weight: 800; }
+        h1 { font-size: 2.5rem; color: white; text-align: center; text-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 40px; }
 
+        /* Flexible Cards */
         .card { 
-            background: var(--glass); border-radius: 28px; padding: 25px; 
-            margin-bottom: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); 
-            border: 1px solid rgba(255,255,255,0.5);
+            background: var(--glass); border-radius: 24px; padding: 25px; 
+            margin-bottom: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255,255,255,0.3);
+            width: 100%; box-sizing: border-box;
+            overflow: hidden; /* Prevents text bleeding out */
         }
 
-        /* Inputs & Buttons */
-        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #eee; border-radius: 16px; font-family: inherit; }
-        button { background: var(--peach); color: white; border: none; padding: 14px; border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,142,110,0.3); }
+        input, textarea, select { 
+            width: 100%; padding: 14px; margin: 8px 0; 
+            border: 1px solid #eee; border-radius: 14px; 
+            font-family: inherit; font-size: 14px;
+            background: white;
+        }
 
-        /* Admin UI Refined */
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 700px; max-height: 85vh; overflow-y: auto; background: white; z-index: 1001; border-radius: 35px; padding: 35px; display: none; border: 2px solid var(--peach); }
+        button { 
+            background: var(--peach); color: white; border: none; 
+            padding: 14px 20px; border-radius: 14px; font-weight: 700; 
+            cursor: pointer; transition: 0.2s; width: 100%;
+        }
+        button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+        /* Admin UI */
+        #adminPanel { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; 
+            background: white; z-index: 1001; border-radius: 30px; padding: 30px; 
+            display: none; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
         #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; }
-        .full-text-preview { background: #f9f9f9; padding: 15px; border-radius: 16px; margin: 15px 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; max-height: 350px; overflow-y: auto; border: 1px solid #eee; }
-        .version-tag { position: absolute; bottom: 15px; right: 25px; font-size: 10px; color: #bbb; letter-spacing: 1px; }
+
+        /* Tag Manager Styles */
+        .tag-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8f8f8; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px;
+        }
+        .del-tag { color: #ff4d4d; font-weight: 800; cursor: pointer; padding: 5px; }
 
         /* Floating Controls */
-        .admin-trigger { position: fixed; bottom: 90px; right: 25px; background: #111; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .toggle-ui { position: fixed; bottom: 25px; right: 25px; background: white; color: var(--peach); width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid var(--peach); font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .admin-btn { position: fixed; bottom: 85px; right: 25px; background: #222; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid white; }
+        .view-btn { position: fixed; bottom: 25px; right: 25px; background: white; color: var(--peach); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 2px solid var(--peach); font-size: 20px; }
 
-        @media (max-width: 800px) { .container { flex-direction: column; } }
+        .version { font-size: 10px; color: #ccc; text-align: right; margin-top: 20px; }
+
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="bg-viewport">
-        <div class="bg-layer" id="bg"></div>
-    </div>
+    <div class="bg-viewport"><div class="bg-layer" id="bg"></div></div>
     <div class="edge-glow"></div>
     
-    <div class="admin-trigger" onclick="openAdmin()">⚙️</div>
-    <div class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
+    <div class="admin-btn" onclick="openAdmin()">⚙️</div>
+    <div class="view-btn" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
 
     <div id="adminOverlay" onclick="closeAdmin()"></div>
     <div id="adminPanel">
-        <h2 style="color:var(--peach); margin:0 0 20px 0;">Staff Dashboard</h2>
+        <h2 style="color:var(--peach); margin-top:0;">Admin Dashboard</h2>
         
-        <h3 style="font-size:11px; text-transform:uppercase; color:#aaa; letter-spacing:1px;">Submission Review</h3>
-        <div id="pendingList">Loading...</div>
+        <h3 style="font-size:12px; color:#999; text-transform:uppercase;">Manage Tags</h3>
+        <div id="tagList"></div>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
+            <button onclick="addTag()" style="width:80px; padding:10px;">Add</button>
+        </div>
 
-        <hr style="border:0; border-top:1px solid #eee; margin:30px 0;">
-        
-        <h3 style="font-size:11px; text-transform:uppercase; color:#aaa; letter-spacing:1px;">Site Controls</h3>
-        <input id="bgUrl" placeholder="Direct Wallpaper URL (i.e. imgur.com/xyz.png)">
-        <button onclick="changeBackground()" style="background:#444;">Apply Wallpaper</button>
-        <textarea id="upContent" placeholder="New Broadcast Message..." style="margin-top:10px;"></textarea>
-        <button onclick="postUpdate()" style="background:#111;">Post Update</button>
+        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
 
-        <button onclick="closeAdmin()" style="background:#eee; color:#333; margin-top:20px; width:100%; border-radius:12px;">Close Dashboard</button>
-        <div class="version-tag">SOHP-SYS V.23.0.4</div>
+        <h3 style="font-size:12px; color:#999; text-transform:uppercase;">Review Guides</h3>
+        <div id="pendingQueue"></div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+
+        <h3 style="font-size:12px; color:#999; text-transform:uppercase;">Announcements</h3>
+        <textarea id="announcementText" placeholder="Broadcast a message..."></textarea>
+        <button onclick="postBroadcast()" style="background:#222;">Post Update</button>
+
+        <button onclick="closeAdmin()" style="background:#eee; color:#666; margin-top:20px;">Close</button>
+        <div class="version">V.24.0.2 • DISCRETE</div>
     </div>
 
     <div class="main-ui">
         <h1>🌸 SOHP GUIDES</h1>
-        <div class="container">
-            <div style="flex:2; min-width:320px;">
-                <div class="card" style="border: 2px solid var(--peach);">
-                    <h2 style="margin:0 0 15px 0; color:var(--peach);">Create a Guide</h2>
-                    <input id="guideTitle" placeholder="Guide Title">
-                    <select id="postCategory"></select>
-                    <textarea id="guideContent" placeholder="Write your full guide here..." rows="5"></textarea>
-                    <input type="file" id="guideFile">
+        <div class="grid">
+            <div class="left-col">
+                <div class="card" style="border-top: 5px solid var(--peach);">
+                    <h2 style="margin-top:0; color:var(--peach);">Submit Guide</h2>
+                    <input id="gTitle" placeholder="Guide Title">
+                    <select id="gCat"></select>
+                    <textarea id="gContent" placeholder="Write your full guide here..." rows="4"></textarea>
+                    <input type="file" id="gFile">
                     <button onclick="submitGuide()">Submit for Approval ✨</button>
                 </div>
-
-                <div style="display:flex; gap:10px; margin-bottom:25px;">
-                    <input type="text" id="searchBar" placeholder="Search guides..." onkeyup="runFilters()" style="margin:0;">
-                    <select id="filterCategory" onchange="runFilters()" style="margin:0; width:160px;"></select>
+                
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0;">
+                    <select id="catFilter" onchange="filter()" style="margin:0; width:140px;"></select>
                 </div>
-                <div id="guides-list"></div>
+                <div id="guides"></div>
             </div>
-            
-            <div style="flex:1; min-width:300px;">
-                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">✨ Broadcasts</h2>
-                <div id="updates-list"></div>
+
+            <div class="right-col">
+                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Updates</h2>
+                <div id="updates"></div>
             </div>
         </div>
     </div>
 
 <script>
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
-    let adminUnlocked = false;
+    let admin = false;
 
     function openAdmin() {
-        if(!adminUnlocked) {
-            if(prompt("Staff Password?") === 'skibidi') adminUnlocked = true;
-            else return;
-        }
+        if(!admin) { if(prompt("Password?") === 'skibidi') admin = true; else return; }
         document.getElementById('adminPanel').style.display = 'block';
         document.getElementById('adminOverlay').style.display = 'block';
         loadAdmin();
@@ -142,87 +161,105 @@
     function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('adminOverlay').style.display = 'none'; }
 
     async function load() {
-        try {
-            const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-            if (bg) document.getElementById('bg').style.backgroundImage = `url('${bg.value}')`;
+        // Load Wallpaper
+        const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
+        if (bg) document.getElementById('bg').style.backgroundImage = `url('${bg.value}')`;
 
-            const { data: cats } = await client.from("guide_categories").select("*");
-            const f = document.getElementById('filterCategory');
-            const p = document.getElementById('postCategory');
-            f.innerHTML = '<option value="All">All Tags</option>'; p.innerHTML = '';
-            if(cats) cats.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; p.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        // Load Tags
+        const { data: tags } = await client.from("guide_categories").select("*");
+        const f = document.getElementById('catFilter');
+        const s = document.getElementById('gCat');
+        f.innerHTML = '<option value="All">All Tags</option>'; s.innerHTML = '';
+        tags?.forEach(t => { 
+            f.innerHTML += `<option value="${t.name}">${t.name}</option>`; 
+            s.innerHTML += `<option value="${t.name}">${t.name}</option>`; 
+        });
 
-            const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", { ascending: false });
-            const gDiv = document.getElementById("guides-list");
-            gDiv.innerHTML = (gs && gs.length) ? "" : "<div class='card'>No approved guides.</div>";
-            if(gs) gs.forEach(g => {
-                let img = g.image_url ? `<img src="${g.image_url}" style="width:100%; border-radius:18px; margin-top:15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">` : "";
-                gDiv.innerHTML += `<div class="card" data-category="${g.category}"><span class="tag-badge" style="background:${g.category==='Important'?'#ff4d4d':'var(--peach)'}">${g.category || 'General'}</span><h3 style="margin-top:0;">${g.title}</h3><p style="white-space:pre-wrap; color:#444;">${g.content}</p>${img}</div>`;
-            });
+        // Load Guides
+        const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", {ascending: false});
+        const gDiv = document.getElementById("guides");
+        gDiv.innerHTML = "";
+        gs?.forEach(g => {
+            let img = g.image_url ? `<img src="${g.image_url}" style="width:100%; border-radius:12px; margin-top:15px;">` : "";
+            gDiv.innerHTML += `<div class="card" data-cat="${g.category}">
+                <span style="font-size:10px; font-weight:800; color:var(--peach); text-transform:uppercase;">${g.category}</span>
+                <h3 style="margin:5px 0;">${g.title}</h3>
+                <p style="white-space:pre-wrap; font-size:14px; color:#444; line-height:1.5;">${g.content}</p>
+                ${img}
+            </div>`;
+        });
 
-            const { data: us } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-            const uDiv = document.getElementById("updates-list");
-            uDiv.innerHTML = "";
-            if(us) us.forEach(u => {
-                let d = u.created_at ? new Date(u.created_at).toLocaleDateString() : "Today";
-                uDiv.innerHTML += `<div class="card" style="padding:20px; border-left:6px solid var(--peach);">
-                    <span style="font-size:10px; color:#999; font-weight:800;">📅 ${d}</span>
-                    <p style="margin:5px 0 0 0;">${u.content}</p>
-                    ${adminUnlocked ? `<span style="color:#ff4d4d; cursor:pointer; font-size:10px; margin-top:10px; display:block;" onclick="del('community_updates', ${u.id})">Remove Broadcast 🗑️</span>` : ''}
-                </div>`;
-            });
-        } catch(e) { console.error(e); }
-    }
-
-    async function loadAdmin() {
-        const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const pDiv = document.getElementById("pendingList");
-        pDiv.innerHTML = (p && p.length) ? "" : "Queue empty.";
-        if(p) p.forEach(i => {
-            pDiv.innerHTML += `
-                <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:24px; margin-bottom:15px;">
-                    <h4 style="margin:0; color:var(--peach);">${i.title}</h4>
-                    <div class="full-text-preview">${i.content}</div>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="approve(${i.id})" style="flex:1; background:#2ecc71;">Approve</button>
-                        <button onclick="del('Euides', ${i.id})" style="flex:1; background:#ff4d4d;">Delete</button>
-                    </div>
-                </div>`;
+        // Load Updates
+        const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
+        const uDiv = document.getElementById("updates");
+        uDiv.innerHTML = "";
+        us?.forEach(u => {
+            let d = new Date(u.created_at).toLocaleDateString();
+            uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:5px solid var(--peach);">
+                <div style="font-size:10px; color:#999; margin-bottom:5px;">📅 ${d}</div>
+                <p style="margin:0; font-size:14px;">${u.content}</p>
+                ${admin ? `<div style="color:red; font-size:10px; margin-top:10px; cursor:pointer;" onclick="del('community_updates', ${u.id})">Delete</div>` : ''}
+            </div>`;
         });
     }
 
+    async function loadAdmin() {
+        // Load Pending
+        const { data: p } = await client.from("Euides").select("*").eq("approved", false);
+        const pDiv = document.getElementById("pendingQueue");
+        pDiv.innerHTML = p?.length ? "" : "No pending guides.";
+        p?.forEach(i => {
+            pDiv.innerHTML += `<div style="background:#f9f9f9; padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid #eee;">
+                <h4 style="margin:0;">${i.title}</h4>
+                <p style="font-size:12px; white-space:pre-wrap; background:white; padding:10px; border-radius:10px; margin:10px 0;">${i.content}</p>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="approve(${i.id})" style="background:#2ecc71; padding:8px;">Approve</button>
+                    <button onclick="del('Euides', ${i.id})" style="background:#ff4d4d; padding:8px;">Reject</button>
+                </div>
+            </div>`;
+        });
+
+        // Load Tags for Manager
+        const { data: tags } = await client.from("guide_categories").select("*");
+        const tDiv = document.getElementById("tagList");
+        tDiv.innerHTML = "";
+        tags?.forEach(t => {
+            tDiv.innerHTML += `<div class="tag-row"><span>${t.name}</span><span class="del-tag" onclick="del('guide_categories', ${t.id})">×</span></div>`;
+        });
+    }
+
+    async function addTag() {
+        const n = document.getElementById('newTagName').value;
+        if(n) { await client.from("guide_categories").insert([{name: n}]); load(); loadAdmin(); }
+    }
+
     async function submitGuide() {
-        const t = document.getElementById("guideTitle").value;
-        const c = document.getElementById("guideContent").value;
-        const cat = document.getElementById("postCategory").value;
-        const f = document.getElementById("guideFile").files[0];
-        if(!t || !c) return alert("Fill all fields.");
+        const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
+        if(!t || !c) return alert("Fill fields!");
         let url = null;
-        if (f) {
+        if(f) {
             const name = Date.now() + "_" + f.name;
             await client.storage.from("guide-media").upload(name, f);
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
-        await client.from("Euides").insert([{ title: t, content: c, image_url: url, category: cat, approved: false }]);
-        alert("Sent for approval!"); location.reload();
+        await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false}]);
+        alert("Submitted!"); location.reload();
     }
 
-    async function approve(id) { await client.from("Euides").update({ approved: true }).eq("id", id); load(); loadAdmin(); }
-    async function postUpdate() { await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]); location.reload(); }
-    async function changeBackground() { await client.from("site_settings").upsert({ id: "wallpaper", value: document.getElementById('bgUrl').value }); location.reload(); }
-    window.del = async (t, id) => { if(confirm("Confirm delete?")) { await client.from(t).delete().eq("id", id); location.reload(); } };
+    async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); load(); loadAdmin(); }
+    async function postBroadcast() { await client.from("community_updates").insert([{content: document.getElementById("announcementText").value}]); location.reload(); }
+    window.del = async (t, id) => { if(confirm("Confirm?")) { await client.from(t).delete().eq("id", id); location.reload(); } };
 
-    function runFilters() {
-        const q = document.getElementById('searchBar').value.toLowerCase();
-        const cat = document.getElementById('filterCategory').value;
-        document.querySelectorAll('#guides-list .card').forEach(g => {
-            const match = (g.innerText.toLowerCase().includes(q)) && (cat === "All" || g.dataset.category === cat);
-            g.style.display = match ? 'block' : 'none';
+    function filter() {
+        const q = document.getElementById('search').value.toLowerCase();
+        const cat = document.getElementById('catFilter').value;
+        document.querySelectorAll('#guides .card').forEach(c => {
+            const match = c.innerText.toLowerCase().includes(q) && (cat === "All" || c.dataset.cat === cat);
+            c.style.display = match ? 'block' : 'none';
         });
     }
 
     window.onload = load;
 </script>
 </body>
-</html>
 </html>
