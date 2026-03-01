@@ -29,10 +29,9 @@
 <script>
 window.addEventListener("DOMContentLoaded", () => {
   // ✅ Correct v2 CDN initialization
-  const { createClient } = window.supabase;
-  const supabaseClient = createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
+  const supabaseClient = Supabase.createClient(
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
   );
 
   // Function to create a guide
