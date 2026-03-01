@@ -10,38 +10,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.95); --outline: #cbd5e1; }
+        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.96); --outline: #cbd5e1; }
 
-        /* Background Fix */
         #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
         #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.5s ease; }
         body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
 
         /* Wallpaper Mode */
-        body.wallpaper-mode .main-ui, body.wallpaper-mode h1 { opacity: 0; pointer-events: none; transform: translateY(20px); }
+        body.wallpaper-mode .main-ui, body.wallpaper-mode h1 { opacity: 0; pointer-events: none; transform: scale(0.98); }
         body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: rgba(0,0,0,0); }
 
         .main-ui { padding: 40px 20px; position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; transition: 0.5s ease; }
         .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px; }
 
-        /* Card Styles */
-        .card { background: var(--glass); border-radius: 28px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        /* Card & Pin Styles */
+        .card { background: var(--glass); border-radius: 28px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: 0.3s; }
         .pinned { border: 3px solid #ffd700 !important; box-shadow: 0 0 25px rgba(255,215,0,0.2) !important; }
         .pin-badge { position: absolute; top: -12px; left: 20px; background: #ffd700; color: #000; padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: 800; z-index: 60; }
 
-        /* Controls */
         .delete-x { position: absolute; top: 15px; right: 15px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; cursor: pointer; z-index: 50; border: none; }
         .pin-btn { position: absolute; top: 15px; right: 48px; background: #475569; color: white; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; }
 
-        .time-tag { font-size: 11px; color: #64748b; font-weight: 800; display: block; margin-bottom: 5px; text-transform: uppercase; }
-        .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid #ddd; }
-        .media-box img, .media-box video { width: 100%; display: block; max-height: 450px; object-fit: contain; }
+        .time-tag { font-size: 11px; color: #64748b; font-weight: 800; display: block; margin-bottom: 5px; }
+        .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; }
+        .media-box img, .media-box video { width: 100%; display: block; max-height: 500px; object-fit: contain; }
 
-        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid var(--outline); border-radius: 16px; box-sizing: border-box; font-family: inherit; background: #fff; }
-        button { background: var(--peach); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s; }
+        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid var(--outline); border-radius: 16px; box-sizing: border-box; font-family: inherit; }
+        button { background: var(--peach); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; }
 
-        /* Admin UI */
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 750px; max-height: 85vh; overflow-y: auto; background: white; z-index: 9999; border-radius: 35px; padding: 35px; display: none; border: 4px solid var(--peach); }
+        /* Admin Dashboard */
+        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 800px; max-height: 85vh; overflow-y: auto; background: white; z-index: 9999; border-radius: 35px; padding: 35px; display: none; border: 4px solid var(--peach); }
         #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9998; display: none; }
         .admin-tag-item { display: flex; justify-content: space-between; background: #f1f5f9; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; align-items: center; }
 
@@ -59,47 +57,45 @@
     <div id="adminPanel">
         <h2 style="color:var(--peach); margin:0 0 20px 0;">Staff Dashboard</h2>
         
-        <h3 style="font-size:14px; color:#64748b;">Broadcasting</h3>
-        <textarea id="bcContent" placeholder="Broadcast message..."></textarea>
-        <button onclick="postBroadcast()" style="background:#0f172a;">Post Update 📢</button>
-
-        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
-        <h3 style="font-size:14px; color:#64748b;">Tag Manager</h3>
-        <div id="tagListDisplay" style="margin-bottom:15px;"></div>
-        <div style="display:flex; gap:10px;">
-            <input id="newTagName" placeholder="New Tag Name..." style="margin:0;">
+        <h3>Tag Manager</h3>
+        <div id="tagListDisplay"></div>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
             <button onclick="addTag()" style="width:100px;">Add</button>
         </div>
 
-        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
-        <h3 style="font-size:14px; color:#64748b;">Review Queue</h3>
-        <div id="pendingList">Queue Loading...</div>
+        <hr style="margin:25px 0; border:1px solid #eee;">
+        <h3>Review Queue (Pending Approval)</h3>
+        <div id="pendingList">Scanning for submissions...</div>
 
-        <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+        <hr style="margin:25px 0; border:1px solid #eee;">
+        <h3>Broadcast / Background</h3>
+        <textarea id="bcContent" placeholder="New staff update..."></textarea>
+        <button onclick="postBroadcast()" style="background:#0f172a; margin-bottom:10px;">Post Update</button>
         <input id="bgUrlInput" placeholder="Wallpaper URL">
-        <button onclick="updateWallpaper()" style="background:#475569; margin-top:10px;">Apply Background</button>
-        <button onclick="closeAdmin()" style="background:#f1f5f9; color:#444; margin-top:20px;">Close</button>
+        <button onclick="updateWallpaper()" style="background:#475569;">Set Wallpaper</button>
+        <button onclick="closeAdmin()" style="background:#f1f5f9; color:#444; margin-top:20px;">Close Panel</button>
     </div>
 
     <div class="main-ui">
         <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6); margin-bottom:45px;">🌸 SOHP GUIDES</h1>
         <div class="grid">
-            <div id="left-col">
+            <div>
                 <div class="card" style="border-top: 6px solid var(--peach);">
-                    <h2 style="margin-top:0; color:var(--peach);">Submit Guide</h2>
-                    <input id="gTitle" placeholder="Guide Title">
+                    <h2 style="margin:0; color:var(--peach);">Create Guide</h2>
+                    <input id="gTitle" placeholder="Title">
                     <select id="gCat"></select>
-                    <textarea id="gContent" placeholder="Write guide details..." rows="5"></textarea>
+                    <textarea id="gContent" placeholder="Details..." rows="4"></textarea>
                     <input type="file" id="gFile" accept="image/*,video/*">
-                    <button onclick="submitGuide()">Submit for Approval ✨</button>
+                    <button onclick="submitGuide()">Submit Now ✨</button>
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0;">
                     <select id="fCat" onchange="filter()" style="margin:0; width:150px;"></select>
                 </div>
-                <div id="guides-list"></div>
+                <div id="guides-list">Fetching guides...</div>
             </div>
-            <div id="right-col">
+            <div>
                 <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Staff Updates</h2>
                 <div id="updates-list"></div>
             </div>
@@ -120,13 +116,6 @@
         }
     }
 
-    // Live update timestamps
-    setInterval(() => {
-        document.querySelectorAll('.time-tag').forEach(tag => {
-            if(tag.dataset.ts) tag.innerText = "🕒 " + timeAgo(tag.dataset.ts);
-        });
-    }, 60000);
-
     function checkPass() { return prompt("Staff Password?") === 'skibidi'; }
     function openAdmin() { if(!isStaff) { if(checkPass()) isStaff = true; else return; } document.getElementById('adminPanel').style.display = 'block'; document.getElementById('adminOverlay').style.display = 'block'; loadAdmin(); }
     function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('adminOverlay').style.display = 'none'; }
@@ -137,8 +126,7 @@
     function getMediaHTML(url) {
         if(!url) return "";
         const isVid = url.toLowerCase().match(/\.(mp4|mov|webm)$/);
-        return `<div class="media-box">${isVid ? `<video controls src="${url}"></video>` : `<img src="${url}">`}</div>
-                <div style="text-align:right;"><a href="${url}" download class="card" style="display:inline-block; padding:8px 15px; margin-top:10px; text-decoration:none; font-size:11px; font-weight:800; border:2px solid var(--peach);">Download 📥</a></div>`;
+        return `<div class="media-box">${isVid ? `<video controls src="${url}"></video>` : `<img src="${url}">`}</div>`;
     }
 
     async function load() {
@@ -150,41 +138,47 @@
         f.innerHTML = '<option value="All">All Tags</option>'; p.innerHTML = '';
         cats?.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; p.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
 
-        // Load Approved Guides (Pins first)
-        const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("pinned", {ascending: false, nullsFirst: false}).order("created_at", {ascending: false});
-        const gDiv = document.getElementById("guides-list"); gDiv.innerHTML = gs?.length ? "" : "No guides available.";
-        gs?.forEach(g => {
-            gDiv.innerHTML += `<div class="card ${g.pinned ? 'pinned' : ''}" data-cat="${g.category}">
-                ${g.pinned ? '<div class="pin-badge">📌 PINNED</div>' : ''}
-                <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
-                <div class="pin-btn" onclick="togglePin(${g.id}, ${g.pinned})">📌</div>
-                <span class="time-tag" data-ts="${g.created_at}">🕒 ${timeAgo(g.created_at)}</span>
-                <span style="font-size:10px; font-weight:800; color:var(--peach); text-transform:uppercase;">${g.category}</span>
-                <h3 style="margin:8px 0;">${g.title}</h3>
-                <p style="white-space:pre-wrap; font-size:14px; color:#334; line-height:1.7;">${g.content}</p>
-                ${getMediaHTML(g.image_url)}
-            </div>`;
-        });
+        // LOAD GUIDES: Filter specifically for approved: true
+        const { data: gs, error } = await client.from("Euides").select("*").eq("approved", true).order("pinned", {ascending: false}).order("created_at", {ascending: false});
+        const gDiv = document.getElementById("guides-list"); 
+        
+        if (error || !gs || gs.length === 0) {
+            gDiv.innerHTML = "<p style='color:white; text-align:center;'>No guides found.</p>";
+        } else {
+            gDiv.innerHTML = "";
+            gs.forEach(g => {
+                gDiv.innerHTML += `<div class="card ${g.pinned ? 'pinned' : ''}" data-cat="${g.category}">
+                    ${g.pinned ? '<div class="pin-badge">📌 PINNED</div>' : ''}
+                    <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
+                    <div class="pin-btn" onclick="togglePin(${g.id}, ${g.pinned})">📌</div>
+                    <span class="time-tag">🕒 ${timeAgo(g.created_at)}</span>
+                    <span style="font-size:10px; font-weight:800; color:var(--peach);">${g.category}</span>
+                    <h3 style="margin:5px 0;">${g.title}</h3>
+                    <p style="white-space:pre-wrap; font-size:14px; color:#334;">${g.content}</p>
+                    ${getMediaHTML(g.image_url)}
+                </div>`;
+            });
+        }
 
         const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
         const uDiv = document.getElementById("updates-list"); uDiv.innerHTML = "";
         us?.forEach(u => {
             uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:6px solid var(--peach);">
                 <div class="delete-x" onclick="safeDelete('community_updates', ${u.id})">×</div>
-                <div class="time-tag" data-ts="${u.created_at}">🕒 ${timeAgo(u.created_at)}</div>
                 <p style="margin:0; font-size:14px;">${u.content}</p>
             </div>`;
         });
     }
 
     async function loadAdmin() {
-        // Load Unapproved Queue
-        const { data: p } = await client.from("Euides").select("*").eq("approved", false).order("created_at", {ascending: false});
-        const pDiv = document.getElementById("pendingList"); pDiv.innerHTML = p?.length ? "" : "No guides pending review.";
+        // LOAD PENDING: Filter specifically for approved: false
+        const { data: p } = await client.from("Euides").select("*").or("approved.eq.false,approved.is.null").order("created_at", {ascending: false});
+        const pDiv = document.getElementById("pendingList"); 
+        pDiv.innerHTML = p?.length ? "" : "No guides pending review.";
         p?.forEach(i => {
             pDiv.innerHTML += `<div style="background:#f8fafc; padding:20px; border-radius:20px; margin-bottom:15px; border:1px solid #ddd;">
-                <h4 style="margin:0; color:var(--peach);">${i.title} (${i.category})</h4>
-                <p style="font-size:13px; margin:10px 0;">${i.content}</p>
+                <h4 style="margin:0;">${i.title} (${i.category})</h4>
+                <p style="font-size:12px;">${i.content}</p>
                 ${getMediaHTML(i.image_url)}
                 <div style="display:flex; gap:10px; margin-top:15px;">
                     <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
@@ -193,25 +187,36 @@
             </div>`;
         });
 
-        // Load Tag List for management
         const { data: cats } = await client.from("guide_categories").select("*");
         const tDiv = document.getElementById("tagListDisplay"); tDiv.innerHTML = "";
         cats?.forEach(c => {
-            tDiv.innerHTML += `<div class="admin-tag-item"><span>${c.name}</span><span style="color:red; cursor:pointer; font-weight:900;" onclick="safeDelete('guide_categories', ${c.id})">×</span></div>`;
+            tDiv.innerHTML += `<div class="admin-tag-item"><span>${c.name}</span><span style="color:red; cursor:pointer;" onclick="safeDelete('guide_categories', ${c.id})">×</span></div>`;
         });
     }
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
-        if(!t || !c) return alert("Fill out title and content.");
+        if(!t || !c) return alert("Fill fields.");
+        
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
             await client.storage.from("guide-media").upload(name, f);
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
-        await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, pinned:false}]);
-        alert("Submitted for staff review!"); location.reload();
+
+        // Fix: Explicitly set approved: false and pinned: false
+        const { error } = await client.from("Euides").insert([{
+            title: t, 
+            content: c, 
+            category: cat, 
+            image_url: url, 
+            approved: false, 
+            pinned: false
+        }]);
+
+        if(error) alert("Error submitting: " + error.message);
+        else { alert("Sent to staff!"); location.reload(); }
     }
 
     async function addTag() { const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{name: n}]); location.reload(); } }
