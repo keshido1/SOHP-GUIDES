@@ -6,29 +6,148 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; justify-content: center; }
-        .container { display: flex; width: 100%; max-width: 1200px; padding: 20px; gap: 20px; flex-wrap: wrap; }
+        :root {
+            --peach-light: #fff5f0;
+            --peach-mid: #ffdbc5;
+            --peach-dark: #ffb491;
+            --peach-accent: #ff8e6e;
+            --text-main: #5d4a44;
+        }
+
+        body { 
+            font-family: 'Quicksand', 'Segoe UI', sans-serif; 
+            margin: 0; 
+            background: var(--peach-light); 
+            color: var(--text-main);
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .container { 
+            display: flex; 
+            width: 100%; 
+            max-width: 1100px; 
+            padding: 30px; 
+            gap: 25px; 
+            flex-wrap: wrap; 
+        }
+        
+        /* Layout Sections */
         .main-content { flex: 2; min-width: 350px; }
         .sidebar { flex: 1; min-width: 300px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .post { background: white; border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 10px; position: relative; }
-        .update-item { font-size: 14px; border-left: 4px solid #1877f2; padding: 10px; margin-bottom: 10px; background: #f9f9f9; position: relative; word-wrap: break-word; }
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { background: #1877f2; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-download { background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 13px; margin-top: 10px; font-weight: bold; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 3px 7px; border-radius: 4px; cursor: pointer; position: absolute; top: 10px; right: 10px; font-size: 10px; z-index: 10; }
-        img { max-width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid #eee; }
+
+        /* Cards */
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 8px 20px rgba(255, 180, 145, 0.2); 
+            margin-bottom: 25px; 
+            border: 2px solid var(--peach-mid);
+        }
+
+        .post { 
+            background: white; 
+            border: 2px solid var(--peach-mid); 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 18px; 
+            position: relative; 
+            transition: transform 0.2s;
+        }
+
+        .post:hover { transform: translateY(-3px); }
+
+        .update-item { 
+            font-size: 14px; 
+            border-left: 5px solid var(--peach-accent); 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            background: #fffafa; 
+            border-radius: 10px;
+            position: relative;
+        }
+
+        /* Inputs & Buttons */
+        input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 2px solid var(--peach-mid); 
+            border-radius: 12px; 
+            box-sizing: border-box;
+            background: #fffcfb;
+            outline: none;
+        }
+
+        input:focus, textarea:focus { border-color: var(--peach-accent); }
+
+        button { 
+            background: var(--peach-accent); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            transition: background 0.3s;
+        }
+
+        button:hover { background: #ff7650; }
+
+        .btn-download { 
+            background: var(--peach-mid); 
+            color: var(--text-main); 
+            padding: 10px 18px; 
+            text-decoration: none; 
+            border-radius: 10px; 
+            display: inline-block; 
+            font-size: 13px; 
+            margin-top: 15px; 
+            font-weight: bold;
+            border: 1px solid var(--peach-dark);
+        }
+
+        .btn-delete { 
+            background: none;
+            border: none;
+            color: var(--peach-dark);
+            cursor: pointer; 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            font-size: 18px; 
+            padding: 5px;
+            border-radius: 50%;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .btn-delete:hover { 
+            color: #ff4d4d;
+            background: #fff0f0;
+        }
+
+        img { 
+            max-width: 100%; 
+            margin-top: 15px; 
+            border-radius: 15px; 
+            border: 3px solid var(--peach-light); 
+        }
+
+        h1, h2 { color: var(--peach-accent); margin-top: 0; }
+        small { color: #a18a81; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="main-content">
-        <h1>SOHP Guides</h1>
+        <h1>🌸 SOHP Guides</h1>
         <div class="card">
             <h2>New Guide</h2>
             <input id="title" placeholder="Guide title">
-            <textarea id="content" placeholder="Content..." rows="3"></textarea>
+            <textarea id="content" placeholder="Write your guide content here..." rows="3"></textarea>
             <input type="file" id="fileInput">
             <button id="postBtn">Post Guide</button>
         </div>
@@ -36,10 +155,10 @@
     </div>
 
     <div class="sidebar">
-        <h2>Community Updates</h2>
+        <h2>✨ Updates</h2>
         <div class="card">
             <textarea id="updateContent" placeholder="New announcement..." rows="2"></textarea>
-            <button id="updateBtn" style="background: #333;">Post Update (Password)</button>
+            <button id="updateBtn">Post Update</button>
         </div>
         <div id="updates">Loading...</div>
     </div>
@@ -55,33 +174,43 @@
         try {
             // Load Guides
             const { data: guides, error: gErr } = await client.from("Euides").select("*").order("created_at", { ascending: false });
-            if (gErr) throw new Error("Guides Table: " + gErr.message);
+            if (gErr) throw gErr;
             
             const gDiv = document.getElementById("guides");
-            gDiv.innerHTML = guides.length ? "" : "No guides found.";
+            gDiv.innerHTML = guides.length ? "" : "<p>No guides posted yet! 🌸</p>";
             guides.forEach(g => {
                 let media = "";
                 if (g.image_url) {
                     const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(g.image_url);
                     media = isImg ? `<img src="${g.image_url}">` : "";
-                    media += `<br><a href="${g.image_url}" target="_blank" download class="btn-download">⬇️ Download File</a>`;
+                    media += `<br><a href="${g.image_url}" target="_blank" download class="btn-download">💾 Download File</a>`;
                 }
-                gDiv.innerHTML += `<div class="post"><button class="btn-delete" onclick="deleteItem('Euides', ${g.id})">Delete</button><h3>${g.title || 'No Title'}</h3><p>${g.content || ''}</p>${media}</div>`;
+                gDiv.innerHTML += `
+                    <div class="post">
+                        <button class="btn-delete" onclick="deleteItem('Euides', ${g.id})" title="Delete">🗑️</button>
+                        <h3>${g.title || 'Untitled'}</h3>
+                        <p style="white-space: pre-wrap;">${g.content || ''}</p>
+                        ${media}
+                    </div>`;
             });
 
             // Load Updates
             const { data: updates, error: uErr } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
-            if (uErr) throw new Error("Updates Table: " + uErr.message);
+            if (uErr) throw uErr;
             
             const uDiv = document.getElementById("updates");
-            uDiv.innerHTML = updates.length ? "" : "No updates yet.";
+            uDiv.innerHTML = updates.length ? "" : "<p>No updates yet. ✨</p>";
             updates.forEach(u => {
-                uDiv.innerHTML += `<div class="update-item"><button class="btn-delete" onclick="deleteItem('community_updates', ${u.id})">X</button>${u.content}<br><small style="color:#888">${new Date(u.created_at).toLocaleDateString()}</small></div>`;
+                uDiv.innerHTML += `
+                    <div class="update-item">
+                        <button class="btn-delete" onclick="deleteItem('community_updates', ${u.id})" style="font-size:14px;">🗑️</button>
+                        ${u.content}
+                        <br><small>📅 ${new Date(u.created_at).toLocaleDateString()}</small>
+                    </div>`;
             });
 
         } catch (err) {
-            console.error(err);
-            document.getElementById("guides").innerHTML = "<b style='color:red'>Connection Error:</b> " + err.message;
+            document.getElementById("guides").innerHTML = "<p style='color:red'>Connection Issue. Please check SQL table.</p>";
         }
     }
 
@@ -89,9 +218,9 @@
         const title = document.getElementById("title").value;
         const content = document.getElementById("content").value;
         const file = document.getElementById("fileInput").files[0];
-        if (!title || !content) return alert("Fill out title and content!");
+        if (!title || !content) return alert("Please fill in the blanks! 🌸");
         
-        document.getElementById("postBtn").innerText = "Uploading...";
+        document.getElementById("postBtn").innerText = "Uploading... ✨";
         let url = null;
         if (file) {
             const name = `${Date.now()}_${file.name}`;
@@ -109,16 +238,16 @@
         if (pass === 'skibidi') {
             await client.from("community_updates").insert([{ content }]);
             location.reload();
-        } else if (pass !== null) { alert("Wrong Password!"); }
+        } else if (pass !== null) { alert("Incorrect! ❌"); }
     };
 
     window.deleteItem = async (table, id) => {
-        const pass = prompt("Enter Password to Delete:");
+        const pass = prompt("Password to delete:");
         if (pass === 'skibidi') {
             const { error } = await client.from(table).delete().eq("id", id);
-            if (error) alert(error.message);
+            if (error) alert("Failed: " + error.message);
             else location.reload();
-        } else if (pass !== null) { alert("Wrong Password!"); }
+        } else if (pass !== null) { alert("Incorrect! ❌"); }
     };
 
     window.onload = loadData;
