@@ -30,10 +30,10 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  // ✅ Initialize Supabase AFTER CDN loads
-  const supabase = supabase.createClient(
-    "https://ioruwtajlnnxxqmgxugn.supabase.co", // replace with your Supabase URL
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // replace with your anon key
+  // Initialize Supabase client
+  const supabaseClient = supabase.createClient(
+    "https://ioruwtajlnnxxqmgxugn.supabase.co", // Replace with your Supabase URL
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto" // Replace with your anon key
   );
 
   // Function to create a guide
@@ -49,22 +49,22 @@ window.addEventListener("DOMContentLoaded", () => {
     try {
       // Upload image if selected
       if (imageFile) {
-        const { data: imageData, error: imageError } = await supabase
+        const { data: imageData, error: imageError } = await supabaseClient
           .storage.from("guide-media").upload(`images/${Date.now()}_${imageFile.name}`, imageFile);
         if (imageError) throw imageError;
-        imageUrl = supabase.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
+        imageUrl = supabaseClient.storage.from("guide-media").getPublicUrl(imageData.path).data.publicUrl;
       }
 
       // Upload video if selected
       if (videoFile) {
-        const { data: videoData, error: videoError } = await supabase
+        const { data: videoData, error: videoError } = await supabaseClient
           .storage.from("guide-media").upload(`videos/${Date.now()}_${videoFile.name}`, videoFile);
         if (videoError) throw videoError;
-        videoUrl = supabase.storage.from("guide-media").getPublicUrl(videoData.path).data.publicUrl;
+        videoUrl = supabaseClient.storage.from("guide-media").getPublicUrl(videoData.path).data.publicUrl;
       }
 
       // Insert guide into Supabase table
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("guides")
         .insert([{ title, content, image_url: imageUrl, video_url: videoUrl }]);
       if (error) throw error;
@@ -86,8 +86,8 @@ window.addEventListener("DOMContentLoaded", () => {
   // Function to load all guides
   async function loadGuides() {
     try {
-      const { data, error } = await supabase
-        .from("guides")
+      const { data, error } = await supabaseClient
+        .from("euides")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -111,7 +111,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Attach event listener to button
+  // Attach button event listener
   document.getElementById("postGuideBtn").addEventListener("click", createGuide);
 
   // Load guides on page load
@@ -120,5 +120,4 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 
 </body>
-</html>
 </html>
