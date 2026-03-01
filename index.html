@@ -1,65 +1,43 @@
-<input type="file" id="image"> <script>
-    window.onload = function() {
-        const supabaseClient = supabase.createClient(
-            "https://ioruwtajlnnxxqmgxugn.supabase.co", 
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto"
-        );
-
-        async function loadGuides() {
-            const { data, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
-            const container = document.getElementById("guides");
-            if (error) { container.innerHTML = "Error: " + error.message; return; }
-            container.innerHTML = data.length ? "" : "No guides found.";
+async function loadGuides() {
+    const { data, error } = await supabaseClient.from("Euides").select("*").order("created_at", { ascending: false });
+    const container = document.getElementById("guides");
+    
+    if (error) { 
+        container.innerHTML = "Error: " + error.message; 
+        return; 
+    }
+    
+    container.innerHTML = data.length ? "" : "No guides found.";
+    
+    data.forEach(g => {
+        let mediaHTML = "";
+        
+        if (g.image_url) {
+            // 1. Identify if it's an image for the preview
+            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
             
-            data.forEach(g => {
-                let mediaHTML = "";
-                if (g.image_url) {
-                    // Check if it's an image to show a preview, otherwise just a download link
-                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(g.image_url);
-                    if (isImage) {
-                        mediaHTML = `<img src="${g.image_url}" style="display:block; margin-bottom:10px;">`;
-                    }
-                    mediaHTML += `<a href="${g.image_url}" download target="_blank" 
-                                    style="display:inline-block; padding:8px 12px; background:#28a745; color:white; text-decoration:none; border-radius:4px; font-size:14px;">
-                                    Download File
-                                  </a>`;
-                }
-
-                container.innerHTML += `
-                    <div class="post">
-                        <h3>${g.title}</h3>
-                        <p>${g.content}</p>
-                        ${mediaHTML}
-                    </div>`;
-            });
-        }
-
-        document.getElementById("postBtn").onclick = async () => {
-            const title = document.getElementById("title").value;
-            const content = document.getElementById("content").value;
-            const file = document.getElementById("image").files[0];
-            let imageUrl = null;
-
-            if (file) {
-                const fileName = `${Date.now()}_${file.name}`;
-                // This uploads any file type
-                const { data: uploadData, error: uploadErr } = await supabaseClient.storage
-                    .from("guide-media")
-                    .upload(fileName, file);
-                
-                if (uploadErr) {
-                    alert("Upload failed: " + uploadErr.message);
-                    return;
-                }
-                const { data: urlData } = supabaseClient.storage.from("guide-media").getPublicUrl(fileName);
-                imageUrl = urlData.publicUrl;
+            if (isImage) {
+                mediaHTML += `<img src="${g.image_url}" style="display:block; max-width:100%; border-radius:8px; margin-bottom:10px;">`;
             }
 
-            const { error } = await supabaseClient.from("Euides").insert([{ title, content, image_url: imageUrl }]);
-            if (error) alert(error.message);
-            else location.reload();
-        };
+            // 2. Always add the Download Button if any file exists
+            // We use target="_blank" and the 'download' attribute
+            mediaHTML += `
+                <div style="margin-top: 10px;">
+                    <a href="${g.image_url}" 
+                       target="_blank" 
+                       download 
+                       style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 14px; border: 1px solid #1e7e34;">
+                       ⬇️ Download Attached File
+                    </a>
+                </div>`;
+        }
 
-        loadGuides();
-    };
-</script>
+        container.innerHTML += `
+            <div class="post" style="border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+                <h3>${g.title || "Untitled"}</h3>
+                <p style="white-space: pre-wrap;">${g.content || ""}</p>
+                ${mediaHTML}
+            </div>`;
+    });
+}
