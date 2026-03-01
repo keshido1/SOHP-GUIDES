@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - V6</title>
+    <title>SOHP Guides - V6 DISCRETE</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
@@ -11,10 +11,12 @@
         :root {
             --peach: #ff8e6e;
             --glass: rgba(255, 255, 255, 0.88);
+            --border: #ffdbc5;
         }
 
-        body, html { margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; overflow-x: hidden; min-height: 100vh; }
+        body, html { margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; min-height: 100vh; }
 
+        /* Background Logic */
         .bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -26,42 +28,48 @@
 
         .container { display: flex; max-width: 1200px; margin: 0 auto; padding: 30px; gap: 25px; flex-wrap: wrap; transition: 0.4s; }
 
+        /* Card Styling */
         .card { 
             background: var(--glass); border-radius: 20px; padding: 25px; 
-            margin-bottom: 25px; border: 2px solid #ffdbc5; position: relative;
+            margin-bottom: 25px; border: 2px solid var(--border); position: relative;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         h1, h2 { color: var(--peach); margin-top: 0; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ffdbc5; border-radius: 12px; box-sizing: border-box; font-family: inherit; }
-        button { background: var(--peach); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; box-sizing: border-box; font-family: inherit; }
+        button { background: var(--peach); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: translateY(-2px); }
 
-        /* Small Discrete Toggle */
+        /* Small Discrete Toggle (Eye Icon) */
         .toggle-ui {
             position: fixed; bottom: 15px; right: 15px; z-index: 100;
-            background: rgba(255, 255, 255, 0.3); color: white; border: 1px solid rgba(255,255,255,0.5);
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
+            background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
+            width: 35px; height: 35px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
             backdrop-filter: blur(5px); transition: 0.3s;
         }
-        .toggle-ui:hover { background: var(--peach); transform: scale(1.1); }
+        .toggle-ui:hover { background: var(--peach); border-color: white; }
 
+        /* Fixed Trash Button */
         .delete-btn {
             position: absolute; top: 15px; right: 15px;
-            background: white; border: 1px solid #ffdbc5; border-radius: 50%;
-            width: 32px; height: 32px; cursor: pointer; color: var(--peach);
-            display: flex; align-items: center; justify-content: center; z-index: 10;
+            background: white; border: 1px solid var(--border); border-radius: 50%;
+            width: 30px; height: 30px; cursor: pointer; color: var(--peach);
+            display: flex; align-items: center; justify-content: center; z-index: 10; transition: 0.2s;
         }
+        .delete-btn:hover { background: var(--peach); color: white; }
 
         .main-col { flex: 2; min-width: 350px; }
         .side-col { flex: 1; min-width: 300px; }
         img { max-width: 100%; border-radius: 15px; margin-top: 15px; border: 3px solid white; }
+        
+        .update-item { border-left: 5px solid var(--peach); padding-left: 15px; margin-bottom: 15px; position: relative; }
     </style>
 </head>
 <body>
 
     <div class="bg-layer" id="bg"></div>
-    <button class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')" title="Toggle UI Visibility">👁️</button>
+    <button class="toggle-ui" onclick="document.body.classList.toggle('wallpaper-mode')" title="View Wallpaper">👁️</button>
 
     <div class="container">
         <div class="main-col">
@@ -79,13 +87,12 @@
         <div class="side-col">
             <h2>✨ Updates</h2>
             <div class="card">
-                <textarea id="upContent" placeholder="Announcement..." rows="2"></textarea>
-                <button id="upBtn" style="background: #5d4a44; margin-bottom: 15px;">Post Update</button>
+                <textarea id="upContent" placeholder="New announcement..." rows="2"></textarea>
+                <button id="upBtn" style="background: #5d4a44; margin-bottom: 20px;">Post Update</button>
                 
-                <hr style="border: 0; border-top: 1px solid #ffdbc5; margin: 20px 0;">
-                <h3 style="font-size: 14px; color: #ff8e6e;">Change Wallpaper URL</h3>
-                <input id="bgUrl" placeholder="Paste image link here...">
-                <button onclick="changeBg()" style="background: #aaa; font-size: 12px; padding: 8px;">Update Background</button>
+                <h3 style="font-size: 13px; color: var(--peach); margin-bottom: 5px;">Wallpaper URL</h3>
+                <input id="bgUrl" placeholder="Paste image link here..." style="font-size: 11px;">
+                <button onclick="changeBg()" style="background: #aaa; font-size: 11px; padding: 6px;">Set Background</button>
             </div>
             <div id="updates-list">Loading...</div>
         </div>
@@ -98,34 +105,47 @@
     );
 
     async function load() {
-        // Load Wallpaper
+        // Load Wallpaper from Settings
         const { data: bgData } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-        if (bgData) document.getElementById('bg').style.backgroundImage = `url('${bgData.value}')`;
+        const defaultBg = "https://images.alphacoders.com/110/thumb-1920-1103783.png";
+        document.getElementById('bg').style.backgroundImage = `url('${bgData ? bgData.value : defaultBg}')`;
 
         // Load Guides
         const { data: g } = await client.from("Euides").select("*").order("created_at", { ascending: false });
         const gDiv = document.getElementById("guides-list");
-        gDiv.innerHTML = "";
+        gDiv.innerHTML = g.length ? "" : "No guides found.";
         g.forEach(item => {
-            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:#ff8e6e;font-weight:bold;text-decoration:none;display:block;margin-top:10px;">💾 Download File</a>` : "";
-            gDiv.innerHTML += `<div class="card"><div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div><h3>${item.title}</h3><p>${item.content}</p>${media}</div>`;
+            let media = item.image_url ? `<img src="${item.image_url}"><br><a href="${item.image_url}" target="_blank" style="color:var(--peach);font-weight:bold;text-decoration:none;font-size:13px;">💾 Download File</a>` : "";
+            gDiv.innerHTML += `
+                <div class="card">
+                    <div class="delete-btn" onclick="del('Euides', ${item.id})">🗑️</div>
+                    <h3 style="margin-right:30px;">${item.title}</h3>
+                    <p style="white-space: pre-wrap;">${item.content}</p>
+                    ${media}
+                </div>`;
         });
 
         // Load Updates
         const { data: u } = await client.from("community_updates").select("*").order("created_at", { ascending: false });
         const uDiv = document.getElementById("updates-list");
-        uDiv.innerHTML = "";
+        uDiv.innerHTML = u.length ? "" : "No updates yet.";
         u.forEach(up => {
-            uDiv.innerHTML += `<div class="card" style="padding:15px;border-left:5px solid #ff8e6e;"><div class="delete-btn" onclick="del('community_updates', ${up.id})" style="width:24px;height:24px;font-size:12px;">🗑️</div><p>${up.content}</p></div>`;
+            uDiv.innerHTML += `
+                <div class="update-item">
+                    <div class="delete-btn" onclick="del('community_updates', ${up.id})" style="width:22px;height:22px;font-size:10px;">🗑️</div>
+                    <p style="margin:0; padding-right:25px;">${up.content}</p>
+                    <small style="color:#aaa;">${new Date(up.created_at).toLocaleDateString()}</small>
+                </div>`;
         });
     }
 
     async function changeBg() {
-        const newUrl = document.getElementById('bgUrl').value;
-        if(!newUrl) return;
-        if(prompt("Password?") === 'skibidi') {
-            await client.from("site_settings").update({ value: newUrl }).eq("id", "wallpaper");
-            location.reload();
+        const url = document.getElementById('bgUrl').value;
+        if(!url) return;
+        if(prompt("Admin Password?") === 'skibidi') {
+            const { error } = await client.from("site_settings").upsert({ id: "wallpaper", value: url });
+            if(error) alert("Error: " + error.message);
+            else location.reload();
         }
     }
 
@@ -133,6 +153,9 @@
         const t = document.getElementById("title").value;
         const c = document.getElementById("content").value;
         const f = document.getElementById("fileInput").files[0];
+        if(!t || !c) return alert("Fill out the guide! 🌸");
+        
+        document.getElementById("postBtn").innerText = "Posting... ✨";
         let url = null;
         if (f) {
             const name = Date.now() + "_" + f.name;
@@ -144,14 +167,15 @@
     };
 
     document.getElementById("upBtn").onclick = async () => {
-        if(prompt("Password?") === 'skibidi') {
-            await client.from("community_updates").insert([{ content: document.getElementById("upContent").value }]);
+        const c = document.getElementById("upContent").value;
+        if(prompt("Admin Password?") === 'skibidi') {
+            await client.from("community_updates").insert([{ content: c }]);
             location.reload();
         }
     };
 
     window.del = async (table, id) => {
-        if(prompt("Password?") === 'skibidi') {
+        if(prompt("Delete Password?") === 'skibidi') {
             await client.from(table).delete().eq("id", id);
             location.reload();
         }
