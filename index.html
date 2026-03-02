@@ -57,7 +57,7 @@
         .hidden { display: none !important; }
         
         @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } }
-        /* Glowing Pulse Animation */
+
     @keyframes blossomGlow {
         0% { filter: drop-shadow(0 0 5px rgba(255,142,110,0.4)); opacity: 0.8; }
         50% { filter: drop-shadow(0 0 20px rgba(255,142,110,0.9)); opacity: 1; }
@@ -117,7 +117,6 @@
     </div>
 
     <div class="main-ui">
-       <div class="main-ui">
         <div style="text-align: center; margin-bottom: 60px; position: relative; padding: 30px 0;">
             <div style="position: relative; display: inline-block;">
                 
@@ -133,7 +132,7 @@
                     </svg>
                 </div>
                 
-                <h1 style="color:white; font-size:4rem; font-weight:800; text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,142,110,0.8), 0 10px 20px rgba(0,0,0,0.6); position: relative; z-index: 2; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;">
+                <h1 style="color:white; font-size:4rem; font-weight:800; text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,142,110,0.8), 0 10px 20px rgba(0,0,0,0.6); position: relative; z-index: 2; margin: 0;">
                     SOHP<span style="color:var(--peach); margin-left:15px; filter: drop-shadow(0 0 10px var(--peach));">GUIDES</span>
                 </h1>
                 <div style="height: 3px; width: 60%; background: linear-gradient(90deg, transparent, var(--peach), transparent); margin: 10px auto; opacity: 0.6;"></div>
@@ -147,9 +146,9 @@
                         <circle cx="150" cy="45" r="5" fill="#ff8e6e"/>
                     </svg>
                 </div>
-
             </div>
         </div>
+
         <div class="admin-box" style="background:var(--glass); display:flex; justify-content:space-between; align-items:center;">
             <div id="user-status" style="font-weight: 800;">Guest Mode</div>
             <div id="auth-ui">
@@ -226,31 +225,20 @@
         loadUpdates();
     }
 
-    function getFileType(url) {
-        if (!url) return "";
-        const ext = url.split('.').pop().toLowerCase().split(/[?#]/)[0];
-        const map = { 
-            'pdf':'📄 PDF', 'docx':'📝 DOCX', 'doc':'📝 DOC', 
-            'xlsx':'📊 EXCEL', 'xls':'📊 EXCEL', 'png':'🖼️ IMG', 
-            'jpg':'🖼️ IMG', 'jpeg':'🖼️ IMG', 'txt':'📄 TXT', 'gif':'🎞️ GIF' 
-        };
-        return map[ext] || "📁 FILE";
-    }
-
     async function openDetails(g) {
         client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
-        const typeStr = getFileType(g.image_url);
+        const typeStr = g.image_url?.split('.').pop() || "";
         
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 20px;">
                 <h1>${g.title}</h1>
                 <div style="display:flex; gap:10px;">
-                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank"><button style="background:#6366f1;">Download ${typeStr}</button></a>` : ''}
+                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank"><button style="background:#6366f1;">Download File</button></a>` : ''}
                     <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
                     <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
                 </div>
             </div>
-            ${g.image_url && typeStr.includes('IMG') ? `<img src="${g.image_url}" class="full-view-img">` : ''}
+            ${g.image_url ? `<img src="${g.image_url}" class="full-view-img">` : ''}
             <p style="white-space:pre-wrap; line-height:1.6;">${g.content}</p>
             <div style="margin-top:40px; padding-top:20px; border-top:2px solid #eee;">
                 <h3>💬 Comments</h3>
@@ -282,12 +270,6 @@
         await client.from("guide_comments").insert([{ guide_id: guideId, user_id: currentUser.id, user_email: currentUser.email, content: text }]);
         loadComments(guideId);
         document.getElementById('newComment').value = "";
-    }
-
-    async function deleteComment(id, gId) { 
-        if (!checkStaff()) return;
-        await client.from("guide_comments").delete().eq("id", id); 
-        loadComments(gId); 
     }
 
     function openAdmin() { if (checkStaff()) { document.getElementById('adminOverlay').style.display = 'flex'; loadAdmin(); } }
@@ -341,7 +323,16 @@
 
     async function approve(id) { if (!checkStaff()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
     
-    async function addTag() { if (!checkStaff()) return; await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); load(); }
+    // Updated addTag to clear input and refresh dropdowns
+    async function addTag() { 
+        if (!checkStaff()) return; 
+        const tagName = document.getElementById('newTagName').value;
+        if(!tagName) return;
+        await client.from("guide_categories").insert([{name: tagName}]); 
+        document.getElementById('newTagName').value = ""; // Clear the input after adding
+        load(); // This refreshes the whole site UI (including dropdowns)
+        loadAdmin(); // This refreshes the tag list inside the staff dashboard
+    }
 
     async function updateWallpaper() { if (!checkStaff()) return; const url = document.getElementById('bgUrlInput').value; await client.from("site_settings").upsert({id: "wallpaper", value: url}); document.getElementById('site-bg-layer').style.backgroundImage = `url('${url}')`; }
 
@@ -358,7 +349,7 @@
         if(confirm("Delete this permanently?")) { 
             await client.from(table).delete().eq("id", id); 
             if(table === 'Euides') { loadGuides(); loadAdmin(); document.getElementById('modalOverlay').style.display = 'none'; }
-            else if(table === 'guide_categories') load();
+            else if(table === 'guide_categories') { load(); loadAdmin(); }
             else loadUpdates();
         } 
     }
