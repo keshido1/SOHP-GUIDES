@@ -61,7 +61,7 @@
     <div id="adminOverlay" onclick="closeModals(event)">
         <div class="panel-content">
             <h1 style="color:var(--peach);">Staff Dashboard</h1>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
                 <div>
                     <div class="admin-box">
                         <h3>📝 Review Queue</h3>
@@ -158,7 +158,6 @@
         const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
         if(bg?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bg.value}')`;
 
-        // Load Tags for Search and Submission
         const { data: cats } = await client.from("guide_categories").select("*");
         const f = document.getElementById('fCat'), g = document.getElementById('gCatSelector');
         f.innerHTML = '<option value="All">All Tags</option>'; g.innerHTML = '';
@@ -172,7 +171,6 @@
     }
 
     async function openDetails(g) {
-        // Increment Views
         await client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
         
         document.getElementById('modal-body').innerHTML = `
@@ -232,11 +230,14 @@
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
         const div = document.getElementById('pendingList'); div.innerHTML = p?.length ? "" : "Queue empty.";
         p?.forEach(i => {
+            // Stringify object for the View Full button to work
+            const iStr = JSON.stringify(i).replace(/'/g, "&apos;");
             div.innerHTML += `<div class="admin-box" style="background:white;">
                 <h4>${i.title}</h4>
                 <div style="display:flex; gap:5px;">
                     <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
-                    <button onclick="openDetails(${JSON.stringify(i).replace(/'/g, "&apos;")})" class="btn-gray" style="flex:1;">View Full</button>
+                    <button onclick='openDetails(${iStr})' class="btn-gray" style="flex:1;">View Full</button>
+                    <button onclick="editGuide(${i.id}, \`${i.title.replace(/'/g, "\\'")}\`, \`${i.content.replace(/`/g, "\\`")}\` )" class="btn-gray" style="flex:1;">Edit</button>
                     <button onclick="deleteItem('Euides', ${i.id})" class="btn-red" style="flex:1;">Reject</button>
                 </div>
             </div>`;
@@ -261,7 +262,8 @@
         const { data: gs } = await query;
         const grid = document.getElementById('guide-grid'); grid.innerHTML = "";
         gs?.filter(g => g.title.toLowerCase().includes(q)).forEach(g => {
-            grid.innerHTML += `<div class="preview-card" onclick='openDetails(${JSON.stringify(g).replace(/'/g, "&apos;")})'>
+            const gStr = JSON.stringify(g).replace(/'/g, "&apos;");
+            grid.innerHTML += `<div class="preview-card" onclick='openDetails(${gStr})'>
                 <img class="preview-thumb" src="${g.image_url || 'https://via.placeholder.com/300x140'}">
                 <div style="padding:15px;"><h4>${g.title}</h4><span style="font-size:10px; opacity:0.6;">${g.category || 'General'}</span></div>
             </div>`;
@@ -305,5 +307,7 @@
     function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
     window.onload = load;
 </script>
+</body>
+</html>
 </body>
 </html>
