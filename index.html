@@ -87,7 +87,7 @@
         <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6);">🌸 SOHP GUIDES</h1>
 
         <div class="admin-box" style="background:var(--glass); display:flex; justify-content:space-between; align-items:center;">
-            <div id="user-status">Guest</div>
+            <div id="user-status" style="font-weight: 800;">Guest Mode</div>
             <div id="auth-ui">
                 <input id="auth-email" placeholder="Email" style="width:150px; margin:0;">
                 <input id="auth-pass" type="password" placeholder="Pass" style="width:100px; margin:0;">
@@ -134,7 +134,7 @@
     async function handleAuth(type) {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-pass').value;
-        const { data, error } = type === 'login' ? 
+        const { error } = type === 'login' ? 
             await client.auth.signInWithPassword({email, password}) : 
             await client.auth.signUp({email, password});
         if(error) alert(error.message); else location.reload();
@@ -151,14 +151,17 @@
     }
 
     async function load() {
-        checkUser();
+        await checkUser();
         const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
         if(bg?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bg.value}')`;
 
         const { data: cats } = await client.from("guide_categories").select("*");
         const f = document.getElementById('fCat'), g = document.getElementById('gCat');
         f.innerHTML = '<option value="All">All Tags</option>'; g.innerHTML = '';
-        cats?.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; g.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        cats?.forEach(c => { 
+            f.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
+            g.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
+        });
         
         loadGuides();
         loadUpdates();
@@ -169,17 +172,16 @@
         
         document.getElementById('modal-body').innerHTML = `
             ${isStaff ? `<div style="float:right; display:flex; gap:5px;">
-                <button class="btn-gray" onclick="editGuide(${g.id}, '${g.title}', \`${g.content}\`)">Edit</button>
+                <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
                 <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
             </div>` : ''}
             <h1>${g.title}</h1>
             <p style="white-space:pre-wrap; line-height:1.6;">${g.content}</p>
-            
             <div class="comment-box">
                 <h3>💬 Discussion</h3>
-                <div id="comment-list">Loading comments...</div>
+                <div id="comment-list">Loading...</div>
                 <div style="margin-top:15px;">
-                    <textarea id="newComment" placeholder="${currentUser ? 'Add a comment...' : 'Please log in to comment'}" ${!currentUser ? 'disabled' : ''}></textarea>
+                    <textarea id="newComment" placeholder="${currentUser ? 'Add a comment...' : 'Log in to comment'}" ${!currentUser ? 'disabled' : ''}></textarea>
                     <button onclick="postComment(${g.id})" style="width:100%;" ${!currentUser ? 'disabled' : ''}>Post Comment</button>
                 </div>
             </div>
@@ -195,10 +197,10 @@
         coms?.forEach(c => {
             div.innerHTML += `
                 <div class="comment-item">
-                    <div class="comment-user">${c.user_email}</div>
+                    <div class="comment-user">${c.user_email || 'User'}</div>
                     <div>${c.content}</div>
                     ${(isStaff || (currentUser && currentUser.id === c.user_id)) ? 
-                        `<button onclick="deleteItem('guide_comments', '${c.id}'); openDetails({id:${guideId}})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px; padding:0;">Delete</button>` : ''}
+                        `<button onclick="deleteComment('${c.id}', ${guideId})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px;">Delete</button>` : ''}
                 </div>`;
         });
     }
@@ -206,25 +208,28 @@
     async function postComment(guideId) {
         const text = document.getElementById('newComment').value;
         if(!text) return;
-        const { error } = await client.from("guide_comments").insert([{
+        await client.from("guide_comments").insert([{
             guide_id: guideId,
             user_id: currentUser.id,
             user_email: currentUser.email,
             content: text
         }]);
-        if(error) alert(error.message); else loadComments(guideId);
+        loadComments(guideId);
         document.getElementById('newComment').value = "";
     }
 
-    // --- RE-IMPORTING PREVIOUS STAFF FUNCTIONS (STAYING UNCHANGED) ---
+    async function deleteComment(id, gId) {
+        await client.from("guide_comments").delete().eq("id", id);
+        loadComments(gId);
+    }
+
     function openAdmin() {
-        if (!isStaff) {
-            const p = prompt("Staff Password:");
-            if (p !== 'skibidi') return alert("Access Denied");
+        const p = prompt("Staff Password:");
+        if (p === 'skibidi') {
             isStaff = true;
-        }
-        document.getElementById('adminOverlay').style.display = 'flex';
-        loadAdmin();
+            document.getElementById('adminOverlay').style.display = 'flex';
+            loadAdmin();
+        } else alert("Denied");
     }
 
     async function loadAdmin() {
@@ -235,13 +240,19 @@
                 <h4>${i.title}</h4>
                 <div style="display:flex; gap:5px;">
                     <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
+                    <button onclick="editGuide(${i.id}, \`${i.title.replace(/'/g, "\\'")}\`, \`${i.content.replace(/`/g, "\\`")}\` )" class="btn-gray" style="flex:1;">Edit</button>
                     <button onclick="deleteItem('Euides', ${i.id})" class="btn-red" style="flex:1;">Reject</button>
                 </div>
             </div>`;
         });
         const { data: cats } = await client.from("guide_categories").select("*");
         const tDiv = document.getElementById("tagManagerList"); tDiv.innerHTML = "";
-        cats?.forEach(c => { tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;"><span>${c.name}</span><button onclick="deleteItem('guide_categories', ${c.id})" style="background:none; color:red;">🗑️</button></div>`; });
+        cats?.forEach(c => { 
+            tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;">
+                <span>${c.name}</span>
+                <button onclick="deleteItem('guide_categories', ${c.id})" style="background:none; color:red;">🗑️</button>
+            </div>`; 
+        });
     }
 
     async function loadGuides() {
@@ -262,15 +273,44 @@
     async function loadUpdates() {
         const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
         const div = document.getElementById("updates-list"); div.innerHTML = "";
-        us?.forEach(u => { div.innerHTML += `<div class="comment-item">${isStaff ? `<button class="btn-red" style="float:right; padding:2px 5px;" onclick="deleteItem('community_updates', ${u.id})">X</button>` : ''}${u.content}</div>`; });
+        us?.forEach(u => { 
+            div.innerHTML += `<div class="comment-item">
+                ${isStaff ? `<button class="btn-red" style="float:right; padding:2px 5px;" onclick="deleteItem('community_updates', ${u.id})">X</button>` : ''}
+                ${u.content}
+            </div>`; 
+        });
     }
 
     async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
-    async function deleteItem(table, id) { if(confirm("Delete this?")) { await client.from(table).delete().eq("id", id); if(table !== 'guide_comments') location.reload(); } }
+    async function editGuide(id, oldT, oldC) {
+        const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
+        if(nt && nc) {
+            await client.from("Euides").update({title:nt, content:nc}).eq("id", id);
+            location.reload();
+        }
+    }
+    async function deleteItem(table, id) { 
+        if(confirm("Delete this?")) { 
+            await client.from(table).delete().eq("id", id); 
+            location.reload(); 
+        } 
+    }
     async function addTag() { await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); location.reload(); }
     async function postUpdate() { await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); location.reload(); }
     async function updateWallpaper() { await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
-    async function submitGuide() { /* ... previous submit logic ... */ }
+    
+    async function submitGuide() {
+        const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
+        let url = null;
+        if(f) {
+            const name = Date.now() + "_" + f.name;
+            await client.storage.from("guide-media").upload(name, f);
+            url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
+        }
+        await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, views:0, pinned:false}]);
+        alert("Submitted!"); location.reload();
+    }
+
     function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
     window.onload = load;
 </script>
