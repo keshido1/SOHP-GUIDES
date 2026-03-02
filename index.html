@@ -10,41 +10,34 @@
     <style>
         /* Intro Overlay - Slide Down & Away */
         #intro-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: #000;
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        /* This handles the smooth movement */
-        transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s;
-    }
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s;
+        }
 
-    #intro-image {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-}
+        #intro-image { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-/* The "Away" State */
-.intro-hidden {
-    transform: translateY(100vh) scale(0.8); /* Moves down 100% of screen and shrinks */
-    opacity: 0;
-    pointer-events: none;
-}
+        .intro-hidden { transform: translateY(100vh) scale(0.8); opacity: 0; pointer-events: none; }
+
         :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); --outline: #cbd5e1; }
+        
         #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
         #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.6s; }
+        
         body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
 
         body.wallpaper-mode .main-ui, body.wallpaper-mode .floating-tools button:not(.eye-toggle) { 
             opacity: 0 !important; pointer-events: none !important; transform: translateY(20px); 
         }
-        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; **background-size: cover;** }
+        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; }
 
         .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .content-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 30px; }
@@ -78,7 +71,7 @@
 </head>
 <body>
     <div id="intro-overlay">
-    <img id="intro-image" src="https://64.media.tumblr.com/c65d58db845ea9ff9cbc5962b410cde1/226f4374a9d95525-32/s540x810/87bbf8e7d11f38c6283670e0aad10dbb95cc75c2.gif" alt="Intro">
+        <img id="intro-image" src="https://64.media.tumblr.com/c65d58db845ea9ff9cbc5962b410cde1/226f4374a9d95525-32/s540x810/87bbf8e7d11f38c6283670e0aad10dbb95cc75c2.gif" alt="Intro">
     </div>
 
     <div id="site-bg-layer"><div id="bg-blur-overlay"></div></div>
@@ -175,7 +168,7 @@
     async function handleAuth(type) {
         const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
         const { error } = type === 'login' ? await client.auth.signInWithPassword({email, password}) : await client.auth.signUp({email, password});
-        if(error) alert(error.message); else location.reload();
+        if(error) alert(error.message); else load();
     }
 
     async function load() {
@@ -232,8 +225,9 @@
         const div = document.getElementById('comment-list');
         div.innerHTML = coms?.length ? "" : "No comments yet.";
         coms?.forEach(c => {
+            // Replaced c.user_email with 'User' to fix schema error
             div.innerHTML += `<div class="comment-item">
-                <div class="comment-user">${c.user_email || 'User'}</div>
+                <div class="comment-user">Community Member</div>
                 <div>${c.content}</div>
                 ${(isStaff || (currentUser && currentUser.id === c.user_id)) ? `<button onclick="deleteComment('${c.id}', ${guideId})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px; padding:0;">Delete</button>` : ''}
             </div>`;
@@ -243,7 +237,8 @@
     async function postComment(guideId) {
         const text = document.getElementById('newComment').value;
         if(!text) return;
-        await client.from("guide_comments").insert([{ guide_id: guideId, user_id: currentUser.id, user_email: currentUser.email, content: text }]);
+        // Removed user_email from insert to prevent Supabase errors
+        await client.from("guide_comments").insert([{ guide_id: guideId, user_id: currentUser.id, content: text }]);
         loadComments(guideId);
         document.getElementById('newComment').value = "";
     }
@@ -310,18 +305,43 @@
         });
     }
 
+    function closeModals(e) { if(e.target === document.getElementById('modalOverlay') || e.target === document.getElementById('adminOverlay')) { e.target.style.display = 'none'; } }
+
     async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
-    async function addTag() { await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); location.reload(); }
-    async function updateWallpaper() { await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
-    async function postUpdate() { await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); location.reload(); }
+    
+    // No-Refresh versions of management tools
+    async function addTag() { 
+        await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); 
+        document.getElementById('newTagName').value = "";
+        load(); 
+    }
+    async function updateWallpaper() { 
+        const newUrl = document.getElementById('bgUrlInput').value;
+        await client.from("site_settings").upsert({id: "wallpaper", value: newUrl}); 
+        document.getElementById('site-bg-layer').style.backgroundImage = `url('${newUrl}')`;
+    }
+    async function postUpdate() { 
+        await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); 
+        document.getElementById('bcContent').value = "";
+        loadUpdates(); 
+    }
     
     async function editGuide(id, oldT, oldC) {
         const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
-        if(nt && nc) { await client.from("Euides").update({title:nt, content:nc}).eq("id", id); location.reload(); }
+        if(nt && nc) { 
+            await client.from("Euides").update({title:nt, content:nc}).eq("id", id); 
+            loadGuides();
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
     }
 
     async function deleteItem(table, id) { 
-        if(confirm("Are you sure?")) { await client.from(table).delete().eq("id", id); location.reload(); } 
+        if(confirm("Are you sure?")) { 
+            await client.from(table).delete().eq("id", id); 
+            if(table === 'Euides') { loadGuides(); loadAdmin(); document.getElementById('modalOverlay').style.display = 'none'; }
+            if(table === 'guide_categories') load();
+            if(table === 'community_updates') loadUpdates();
+        } 
     }
 
     async function submitGuide() {
@@ -333,18 +353,18 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, views:0}]);
-        alert("Sent for review"); location.reload();
+        alert("Sent for review");
+        document.getElementById("gTitle").value = ""; document.getElementById("gContent").value = "";
     }
 
     window.addEventListener('load', () => {
-    const intro = document.getElementById('intro-overlay');
-    
-    // Adjust 3000 (3 seconds) to match your animation length
-    setTimeout(() => {
-        intro.classList.add('intro-hidden');
-        
-        // Remove from memory after the slide finishes
-        setTimeout(() => intro.remove(), 1500);
-    }, 2000); 
-});
+        load();
+        const intro = document.getElementById('intro-overlay');
+        setTimeout(() => {
+            intro.classList.add('intro-hidden');
+            setTimeout(() => intro.remove(), 1500);
+        }, 2000); 
+    });
 </script>
+</body>
+</html>
