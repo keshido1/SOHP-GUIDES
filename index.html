@@ -3,221 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - Alice Edition</title>
-    <link rel="icon" type="image/png" href="https://static.wikia.nocookie.net/gensin-impact/images/9/9e/Icon_Emoji_Paimon%27s_Paintings_41_Alice_1.png">
-    
+    <title>SOHP Guides - Ultra Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.96); --outline: #cbd5e1; }
-
-        #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
-        #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.5s ease; }
-        body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
-
-        body.wallpaper-mode .main-ui, body.wallpaper-mode h1 { opacity: 0; pointer-events: none; transform: scale(0.98); }
-        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: rgba(0,0,0,0); }
-
-        .main-ui { padding: 40px 20px; position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; transition: 0.5s ease; }
-        .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px; }
-
-        .card { background: var(--glass); border-radius: 28px; padding: 25px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.5); position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); --dark: #1e293b; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: #1a1a1a; color: #334; }
         
-        .delete-x { position: absolute; top: 15px; right: 15px; background: #ef4444; color: white; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; cursor: pointer; z-index: 50; border: none; }
+        #site-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-size: cover; background-position: center; filter: blur(10px) brightness(0.5); }
+        
+        .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* User Bar */
+        .user-auth-bar { background: var(--glass); padding: 15px 25px; border-radius: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .auth-inputs { display: flex; gap: 10px; }
+        .auth-inputs input { padding: 8px 12px; border-radius: 10px; border: 1px solid #ddd; }
 
-        .time-tag { font-size: 11px; color: #64748b; font-weight: 800; display: block; margin-bottom: 5px; }
-        .media-box { margin-top: 15px; border-radius: 20px; overflow: hidden; background: #000; }
-        .media-box img, .media-box video { width: 100%; display: block; max-height: 500px; object-fit: contain; }
+        /* Guide Grid */
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        
+        /* Preview Card */
+        .preview-card { background: var(--glass); border-radius: 24px; overflow: hidden; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.3); }
+        .preview-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .preview-thumb { width: 100%; height: 160px; background: #000; object-fit: cover; }
+        .preview-info { padding: 15px; }
+        .preview-info h3 { margin: 0; font-size: 18px; color: var(--dark); }
+        .tag-pill { font-size: 10px; font-weight: 800; color: var(--peach); text-transform: uppercase; }
 
-        input, textarea, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid var(--outline); border-radius: 16px; box-sizing: border-box; font-family: inherit; }
-        button { background: var(--peach); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; }
+        /* Full Details Modal */
+        #modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 90%; max-width: 900px; max-height: 90vh; border-radius: 30px; overflow-y: auto; position: relative; padding: 40px; }
+        .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer; }
 
-        #adminPanel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 800px; max-height: 85vh; overflow-y: auto; background: white; z-index: 9999; border-radius: 35px; padding: 35px; display: none; border: 4px solid var(--peach); }
-        #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9998; display: none; }
-        .admin-tag-item { display: flex; justify-content: space-between; background: #f1f5f9; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; align-items: center; }
+        /* Comment System */
+        .comment-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .comment-bubble { background: #f1f5f9; padding: 12px 18px; border-radius: 15px; margin-bottom: 10px; font-size: 14px; }
+        .comment-user { font-weight: 800; color: var(--peach); margin-bottom: 4px; display: block; }
 
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        button { background: var(--peach); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        input, textarea, select { padding: 12px; border-radius: 12px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="site-bg-layer"><div id="bg-blur-overlay"></div></div>
-    
-    <div style="position:fixed; bottom:85px; right:25px; background:#1e293b; color:white; width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:1000; border:2px solid #fff;" onclick="openAdmin()">⚙️</div>
-    <div style="position:fixed; bottom:25px; right:25px; background:white; color:var(--peach); width:55px; height:55px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:1000; border:2px solid var(--peach); font-size:22px;" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</div>
-
-    <div id="adminOverlay" onclick="closeAdmin()"></div>
-    <div id="adminPanel">
-        <h2 style="color:var(--peach); margin:0 0 20px 0;">Staff Dashboard</h2>
-        
-        <h3>Tag Manager</h3>
-        <div id="tagListDisplay"></div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
-            <button onclick="addTag()" style="width:100px;">Add</button>
-        </div>
-
-        <hr style="margin:25px 0; border:1px solid #eee;">
-        <h3>Review Queue</h3>
-        <div id="pendingList">Scanning for submissions...</div>
-
-        <hr style="margin:25px 0; border:1px solid #eee;">
-        <h3>Broadcast / Background</h3>
-        <textarea id="bcContent" placeholder="New staff update..."></textarea>
-        <button onclick="postBroadcast()" style="background:#0f172a; margin-bottom:10px;">Post Update</button>
-        <input id="bgUrlInput" placeholder="Wallpaper URL">
-        <button onclick="updateWallpaper()" style="background:#475569;">Set Wallpaper</button>
-        <button onclick="closeAdmin()" style="background:#f1f5f9; color:#444; margin-top:20px;">Close Panel</button>
-    </div>
+    <div id="site-bg"></div>
 
     <div class="main-ui">
-        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6); margin-bottom:45px;">🌸 SOHP GUIDES</h1>
-        <div class="grid">
-            <div>
-                <div class="card" style="border-top: 6px solid var(--peach);">
-                    <h2 style="margin:0; color:var(--peach);">Submit Guide</h2>
-                    <input id="gTitle" placeholder="Title">
-                    <select id="gCat"></select>
-                    <textarea id="gContent" placeholder="Details..." rows="4"></textarea>
-                    <input type="file" id="gFile" accept="image/*,video/*">
-                    <button onclick="submitGuide()">Submit Now ✨</button>
-                </div>
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <input type="text" id="search" placeholder="Search..." onkeyup="filter()" style="margin:0;">
-                    <select id="fCat" onchange="filter()" style="margin:0; width:150px;"></select>
-                </div>
-                <div id="guides-list">Fetching guides...</div>
+        <h1 style="color:white; text-align:center; text-shadow: 0 4px 15px rgba(0,0,0,0.5);">🌸 SOHP GUIDES</h1>
+
+        <div class="user-auth-bar">
+            <div id="user-info">Guest User</div>
+            <div class="auth-inputs" id="auth-controls">
+                <input id="auth-email" type="email" placeholder="Email">
+                <input id="auth-pass" type="password" placeholder="Password">
+                <button onclick="handleSignup()">Join</button>
+                <button onclick="handleLogin()" style="background:#0f172a;">Login</button>
             </div>
-            <div>
-                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Staff Updates</h2>
-                <div id="updates-list"></div>
+            <div id="logged-in-controls" class="hidden">
+                <button onclick="client.auth.signOut().then(()=>location.reload())" style="background:#ef4444;">Logout</button>
+            </div>
+        </div>
+
+        <div style="background:var(--glass); padding:25px; border-radius:25px; margin-bottom:40px;">
+            <h2 style="margin:0 0 15px 0; color:var(--peach);">Submit a Guide</h2>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <input id="gTitle" placeholder="Guide Title">
+                <select id="gCat"></select>
+            </div>
+            <textarea id="gContent" placeholder="Full guide details..." rows="3" style="margin-top:10px;"></textarea>
+            <input type="file" id="gFile" style="margin-top:10px;">
+            <button onclick="submitGuide()" style="margin-top:10px; width:100%;">Post Guide ✨</button>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <input type="text" id="search" placeholder="Search guides..." onkeyup="loadGuides()">
+            <select id="fCat" onchange="loadGuides()" style="width:150px;"></select>
+        </div>
+
+        <div id="guide-grid" class="guide-grid"></div>
+    </div>
+
+    <div id="modalOverlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeDetails()">&times;</span>
+            <div id="modal-body"></div>
+            
+            <div class="comment-section">
+                <h3>Comments</h3>
+                <div id="comment-list"></div>
+                <div id="comment-form" class="hidden" style="margin-top:20px;">
+                    <textarea id="cInput" placeholder="Add a comment..." rows="2"></textarea>
+                    <button onclick="postComment()" style="margin-top:5px;">Post Comment</button>
+                </div>
+                <p id="comment-login-msg">Log in to leave a comment.</p>
             </div>
         </div>
     </div>
 
 <script>
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
-    let isStaff = false;
-
-    function timeAgo(date) {
-        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-        if (seconds < 60) return "Just now";
-        const intervals = { year: 31536000, month: 2592000, day: 86400, hour: 3600, minute: 60 };
-        for (let key in intervals) {
-            const val = Math.floor(seconds / intervals[key]);
-            if (val >= 1) return val + " " + key + (val > 1 ? "s" : "") + " ago";
-        }
-    }
-
-    function checkPass() { return prompt("Staff Password?") === 'skibidi'; }
-    function openAdmin() { if(!isStaff) { if(checkPass()) isStaff = true; else return; } document.getElementById('adminPanel').style.display = 'block'; document.getElementById('adminOverlay').style.display = 'block'; loadAdmin(); }
-    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; document.getElementById('adminOverlay').style.display = 'none'; }
     
-    async function safeDelete(table, id) { if(checkPass()) { await client.from(table).delete().eq("id", id); location.reload(); } }
+    let currentUser = null;
+    let activeGuideId = null;
 
-    function getMediaHTML(url) {
-        if(!url) return "";
-        const isVid = url.toLowerCase().match(/\.(mp4|mov|webm)$/);
-        return `<div class="media-box">${isVid ? `<video controls src="${url}"></video>` : `<img src="${url}">`}</div>`;
+    // --- AUTH LOGIC ---
+    client.auth.onAuthStateChange((event, session) => {
+        currentUser = session?.user || null;
+        if(currentUser) {
+            document.getElementById('user-info').innerText = "Welcome, " + currentUser.email;
+            document.getElementById('auth-controls').classList.add('hidden');
+            document.getElementById('logged-in-controls').classList.remove('hidden');
+            document.getElementById('comment-form').classList.remove('hidden');
+            document.getElementById('comment-login-msg').classList.add('hidden');
+        }
+    });
+
+    async function handleSignup() {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        const { error } = await client.auth.signUp({email, password: pass});
+        if(error) alert(error.message); else alert("Check your email for confirmation!");
     }
 
-    async function load() {
-        const { data: bgData } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-        if (bgData?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bgData.value}')`;
+    async function handleLogin() {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        const { error } = await client.auth.signInWithPassword({email, password: pass});
+        if(error) alert(error.message); else location.reload();
+    }
 
+    // --- CORE LOGIC ---
+    async function init() {
+        // Load Wallpaper
+        const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
+        if(bg) document.getElementById('site-bg').style.backgroundImage = `url('${bg.value}')`;
+
+        // Load Categories
         const { data: cats } = await client.from("guide_categories").select("*");
-        const f = document.getElementById('fCat'); const p = document.getElementById('gCat');
+        const f = document.getElementById('fCat'), p = document.getElementById('gCat');
         f.innerHTML = '<option value="All">All Tags</option>'; p.innerHTML = '';
-        cats?.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; p.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
-
-        // Removed .order("pinned") to prevent the error you saw
-        const { data: gs } = await client.from("Euides").select("*").eq("approved", true).order("created_at", {ascending: false});
-        const gDiv = document.getElementById("guides-list"); 
-        gDiv.innerHTML = gs?.length ? "" : "<p style='color:white; text-align:center;'>No guides found.</p>";
-        
-        gs?.forEach(g => {
-            gDiv.innerHTML += `<div class="card" data-cat="${g.category}">
-                <div class="delete-x" onclick="safeDelete('Euides', ${g.id})">×</div>
-                <span class="time-tag">🕒 ${timeAgo(g.created_at)}</span>
-                <span style="font-size:10px; font-weight:800; color:var(--peach);">${g.category}</span>
-                <h3 style="margin:5px 0;">${g.title}</h3>
-                <p style="white-space:pre-wrap; font-size:14px; color:#334;">${g.content}</p>
-                ${getMediaHTML(g.image_url)}
-            </div>`;
+        cats?.forEach(c => { 
+            f.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
+            p.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
         });
 
-        const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
-        const uDiv = document.getElementById("updates-list"); uDiv.innerHTML = "";
-        us?.forEach(u => {
-            uDiv.innerHTML += `<div class="card" style="padding:15px; border-left:6px solid var(--peach);">
-                <div class="delete-x" onclick="safeDelete('community_updates', ${u.id})">×</div>
-                <p style="margin:0; font-size:14px;">${u.content}</p>
-            </div>`;
+        loadGuides();
+    }
+
+    async function loadGuides() {
+        const search = document.getElementById('search').value.toLowerCase();
+        const cat = document.getElementById('fCat').value;
+        
+        let query = client.from("Euides").select("*").eq("approved", true).order("created_at", {ascending: false});
+        if(cat !== "All") query = query.eq("category", cat);
+        
+        const { data: gs } = await query;
+        const grid = document.getElementById('guide-grid');
+        grid.innerHTML = "";
+
+        gs?.filter(g => g.title.toLowerCase().includes(search)).forEach(g => {
+            grid.innerHTML += `
+                <div class="preview-card" onclick="openDetails(${JSON.stringify(g).replace(/"/g, '&quot;')})">
+                    <img class="preview-thumb" src="${g.image_url || 'https://via.placeholder.com/300x160?text=No+Image'}" onerror="this.src='https://via.placeholder.com/300x160?text=Video+Guide'">
+                    <div class="preview-info">
+                        <span class="tag-pill">${g.category}</span>
+                        <h3>${g.title}</h3>
+                        <p style="font-size:12px; color:#666; margin-top:5px;">Click to read more...</p>
+                    </div>
+                </div>
+            `;
         });
     }
 
-    async function loadAdmin() {
-        const { data: p } = await client.from("Euides").select("*").eq("approved", false).order("created_at", {ascending: false});
-        const pDiv = document.getElementById("pendingList"); 
-        pDiv.innerHTML = p?.length ? "" : "No guides pending review.";
-        p?.forEach(i => {
-            pDiv.innerHTML += `<div style="background:#f8fafc; padding:20px; border-radius:20px; margin-bottom:15px; border:1px solid #ddd;">
-                <h4 style="margin:0;">${i.title} (${i.category})</h4>
-                <p style="font-size:12px;">${i.content}</p>
-                ${getMediaHTML(i.image_url)}
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
-                    <button onclick="safeDelete('Euides', ${i.id})" style="background:#ef4444; flex:1;">Reject</button>
-                </div>
-            </div>`;
-        });
+    function openDetails(guide) {
+        activeGuideId = guide.id;
+        const body = document.getElementById('modal-body');
+        const media = guide.image_url ? 
+            (guide.image_url.match(/\.(mp4|webm|mov)$/i) ? 
+                `<video controls src="${guide.image_url}" style="width:100%; border-radius:15px;"></video>` : 
+                `<img src="${guide.image_url}" style="width:100%; border-radius:15px;">`) 
+            : "";
 
-        const { data: cats } = await client.from("guide_categories").select("*");
-        const tDiv = document.getElementById("tagListDisplay"); tDiv.innerHTML = "";
-        cats?.forEach(c => {
-            tDiv.innerHTML += `<div class="admin-tag-item"><span>${c.name}</span><span style="color:red; cursor:pointer;" onclick="safeDelete('guide_categories', ${c.id})">×</span></div>`;
+        body.innerHTML = `
+            <span class="tag-pill">${guide.category}</span>
+            <h1 style="margin:10px 0;">${guide.title}</h1>
+            <p style="font-size:12px; color:#666;">Posted: ${new Date(guide.created_at).toLocaleDateString()}</p>
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+            <div style="white-space:pre-wrap; line-height:1.6; font-size:16px;">${guide.content}</div>
+            <div style="margin-top:20px;">${media}</div>
+        `;
+        
+        loadComments(guide.id);
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeDetails() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+    async function loadComments(gid) {
+        const { data: coms } = await client.from("guide_comments").select("*").eq("guide_id", gid).order("created_at", {ascending: true});
+        const list = document.getElementById('comment-list');
+        list.innerHTML = coms?.length ? "" : "<p style='font-size:12px; color:#999;'>No comments yet.</p>";
+        coms?.forEach(c => {
+            list.innerHTML += `
+                <div class="comment-bubble">
+                    <span class="comment-user">${c.username || 'Anonymous User'}</span>
+                    ${c.content}
+                </div>
+            `;
         });
+    }
+
+    async function postComment() {
+        const val = document.getElementById('cInput').value;
+        if(!val || !currentUser) return;
+        
+        await client.from("guide_comments").insert([{
+            guide_id: activeGuideId,
+            user_id: currentUser.id,
+            username: currentUser.email.split('@')[0],
+            content: val
+        }]);
+        
+        document.getElementById('cInput').value = "";
+        loadComments(activeGuideId);
     }
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
-        if(!t || !c) return alert("Please fill out the title and content.");
-        
+        if(!t || !c) return alert("Fill out fields.");
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
             await client.storage.from("guide-media").upload(name, f);
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
-
-        // Removed 'pinned' from the insert list to fix your error
-        const { error } = await client.from("Euides").insert([{
-            title: t, 
-            content: c, 
-            category: cat, 
-            image_url: url, 
-            approved: false
-        }]);
-
-        if(error) alert("Error: " + error.message);
-        else { alert("Sent for review!"); location.reload(); }
+        await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false}]);
+        alert("Sent for review!"); location.reload();
     }
 
-    async function addTag() { const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{name: n}]); location.reload(); } }
-    async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); location.reload(); }
-    async function postBroadcast() { await client.from("community_updates").insert([{content: document.getElementById("bcContent").value}]); location.reload(); }
-    async function updateWallpaper() { await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
-    
-    function filter() {
-        const q = document.getElementById('search').value.toLowerCase();
-        const cat = document.getElementById('fCat').value;
-        document.querySelectorAll('#guides-list .card').forEach(c => {
-            const match = c.innerText.toLowerCase().includes(q) && (cat === "All" || c.dataset.cat === cat);
-            c.style.display = match ? 'block' : 'none';
-        });
-    }
-    window.onload = load;
+    init();
 </script>
 </body>
 </html>
