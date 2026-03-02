@@ -8,16 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        /* Intro Overlay */
         #intro-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: #000;
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 99999; display: flex; align-items: center; justify-content: center;
             transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s;
         }
         #intro-image { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -101,12 +94,12 @@
                     <div class="admin-box">
                         <h3>📢 Post Update</h3>
                         <textarea id="bcContent" placeholder="Announcement..."></textarea>
-                        <button onclick="postUpdate()" style="width:100%;">Post to Updates</button>
+                        <button onclick="postUpdate()" style="width:100%;">Post Update</button>
                     </div>
                     <div class="admin-box">
                         <h3>🖼️ Wallpaper Settings</h3>
                         <input id="bgUrlInput" placeholder="Wallpaper URL">
-                        <button onclick="updateWallpaper()" style="width:100%;" class="btn-gray">Apply Background</button>
+                        <button onclick="updateWallpaper()" style="width:100%;" class="btn-gray">Apply</button>
                     </div>
                 </div>
             </div>
@@ -162,76 +155,67 @@
     let currentUser = null;
     const STAFF_PASS = 'skibidi';
 
-    // Speed fix: Parallel Load
+    function checkStaff() {
+        if (isStaff) return true;
+        const p = prompt("Enter Staff Password:");
+        if (p === STAFF_PASS) { isStaff = true; return true; }
+        alert("Incorrect Password"); return false;
+    }
+
     async function load() {
-        const [userData, bgData, catData] = await Promise.all([
+        const [u, bg, cats] = await Promise.all([
             client.auth.getUser(),
             client.from("site_settings").select("value").eq("id", "wallpaper").single(),
             client.from("guide_categories").select("*")
         ]);
-
-        if(userData.data.user) {
-            currentUser = userData.data.user;
+        if(u.data.user) {
+            currentUser = u.data.user;
             document.getElementById('user-status').innerText = currentUser.email;
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('logout-btn').classList.remove('hidden');
         }
-
-        if(bgData.data?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bgData.data.value}')`;
-
+        if(bg.data?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bg.data.value}')`;
         const f = document.getElementById('fCat'), g = document.getElementById('gCatSelector');
         f.innerHTML = '<option value="All">All Tags</option>'; g.innerHTML = '';
-        catData.data?.forEach(c => { 
+        cats.data?.forEach(c => { 
             const opt = `<option value="${c.name}">${c.name}</option>`;
             f.innerHTML += opt; g.innerHTML += opt; 
         });
-
         loadGuides();
         loadUpdates();
     }
 
     function getFileType(url) {
         if (!url) return "";
-        const ext = url.split('.').pop().toLowerCase().split('?')[0];
-        const map = { 'pdf':'📄 PDF', 'png':'🖼️ IMG', 'jpg':'🖼️ IMG', 'jpeg':'🖼️ IMG', 'gif':'🎞️ GIF', 'mp4':'🎥 VID' };
+        const ext = url.split('.').pop().toLowerCase().split(/[?#]/)[0];
+        const map = { 
+            'pdf':'📄 PDF', 'docx':'📝 DOCX', 'doc':'📝 DOC', 
+            'xlsx':'📊 EXCEL', 'xls':'📊 EXCEL', 'png':'🖼️ IMG', 
+            'jpg':'🖼️ IMG', 'jpeg':'🖼️ IMG', 'txt':'📄 TXT', 'gif':'🎞️ GIF' 
+        };
         return map[ext] || "📁 FILE";
-    }
-
-    function validateStaff() {
-        if (isStaff) return true;
-        if (prompt("Staff Password:") === STAFF_PASS) { isStaff = true; return true; }
-        alert("Access Denied"); return false;
-    }
-
-    async function handleAuth(type) {
-        const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
-        const { error } = type === 'login' ? await client.auth.signInWithPassword({email, password}) : await client.auth.signUp({email, password});
-        if(error) alert(error.message); else load();
     }
 
     async function openDetails(g) {
         client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
-        const fileTag = getFileType(g.image_url);
+        const typeStr = getFileType(g.image_url);
         
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 20px;">
                 <h1>${g.title}</h1>
                 <div style="display:flex; gap:10px;">
-                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank"><button style="background:#6366f1;">Download ${fileTag}</button></a>` : ''}
-                    ${isStaff ? `
-                        <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
-                        <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
-                    ` : ''}
+                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank"><button style="background:#6366f1;">Download ${typeStr}</button></a>` : ''}
+                    <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
+                    <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
                 </div>
             </div>
-            ${g.image_url ? `<img src="${g.image_url}" class="full-view-img">` : ''}
+            ${g.image_url && typeStr.includes('IMG') ? `<img src="${g.image_url}" class="full-view-img">` : ''}
             <p style="white-space:pre-wrap; line-height:1.6;">${g.content}</p>
-            
             <div style="margin-top:40px; padding-top:20px; border-top:2px solid #eee;">
                 <h3>💬 Comments</h3>
                 <div id="comment-list">Loading...</div>
                 <textarea id="newComment" placeholder="${currentUser ? 'Add a comment...' : 'Log in to comment'}" ${!currentUser ? 'disabled' : ''} style="margin-top:15px;"></textarea>
-                <button onclick="postComment(${g.id})" style="width:100%;" ${!currentUser ? 'disabled' : ''}>Post Comment</button>
+                <button onclick="postComment(${g.id})" style="width:100%;" ${!currentUser ? 'disabled' : ''}>Post</button>
             </div>
         `;
         document.getElementById('modalOverlay').style.display = 'flex';
@@ -244,7 +228,7 @@
         div.innerHTML = coms?.length ? "" : "No comments yet.";
         coms?.forEach(c => {
             div.innerHTML += `<div class="comment-item">
-                <div class="comment-user">${c.user_email || 'User'}</div>
+                <div class="comment-user">${c.user_email || 'Member'}</div>
                 <div>${c.content}</div>
                 ${(isStaff || (currentUser && currentUser.id === c.user_id)) ? `<button onclick="deleteComment('${c.id}', ${guideId})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px; padding:0;">Delete</button>` : ''}
             </div>`;
@@ -260,12 +244,12 @@
     }
 
     async function deleteComment(id, gId) { 
-        if (!validateStaff()) return;
+        if (!checkStaff()) return;
         await client.from("guide_comments").delete().eq("id", id); 
         loadComments(gId); 
     }
 
-    function openAdmin() { if (validateStaff()) { document.getElementById('adminOverlay').style.display = 'flex'; loadAdmin(); } }
+    function openAdmin() { if (checkStaff()) { document.getElementById('adminOverlay').style.display = 'flex'; loadAdmin(); } }
 
     async function loadAdmin() {
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
@@ -284,10 +268,7 @@
         const { data: cats } = await client.from("guide_categories").select("*");
         const tDiv = document.getElementById("tagManagerList"); tDiv.innerHTML = "";
         cats?.forEach(c => { 
-            tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
-                <span>${c.name}</span>
-                <button onclick="deleteItem('guide_categories', ${c.id})" style="background:none; color:red; padding:0;">🗑️</button>
-            </div>`; 
+            tDiv.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${c.name}</span><button onclick="deleteItem('guide_categories', ${c.id})" style="background:none; color:red; padding:0;">🗑️</button></div>`; 
         });
     }
 
@@ -317,26 +298,23 @@
 
     function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
 
-    async function approve(id) { if (!validateStaff()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
+    async function approve(id) { if (!checkStaff()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
     
-    async function addTag() { if (!validateStaff()) return; await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); load(); }
+    async function addTag() { if (!checkStaff()) return; await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); load(); }
 
-    async function updateWallpaper() { if (!validateStaff()) return; const newUrl = document.getElementById('bgUrlInput').value; await client.from("site_settings").upsert({id: "wallpaper", value: newUrl}); document.getElementById('site-bg-layer').style.backgroundImage = `url('${newUrl}')`; }
+    async function updateWallpaper() { if (!checkStaff()) return; const url = document.getElementById('bgUrlInput').value; await client.from("site_settings").upsert({id: "wallpaper", value: url}); document.getElementById('site-bg-layer').style.backgroundImage = `url('${url}')`; }
 
-    async function postUpdate() { if (!validateStaff()) return; await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); loadUpdates(); }
+    async function postUpdate() { if (!checkStaff()) return; await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); loadUpdates(); }
     
     async function editGuide(id, oldT, oldC) {
-        if (!validateStaff()) return;
+        if (!checkStaff()) return;
         const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
-        if(nt && nc) { 
-            await client.from("Euides").update({title:nt, content:nc}).eq("id", id); 
-            loadGuides(); document.getElementById('modalOverlay').style.display = 'none';
-        }
+        if(nt && nc) { await client.from("Euides").update({title:nt, content:nc}).eq("id", id); loadGuides(); document.getElementById('modalOverlay').style.display = 'none'; }
     }
 
     async function deleteItem(table, id) { 
-        if (!validateStaff()) return;
-        if(confirm("Are you sure?")) { 
+        if (!checkStaff()) return;
+        if(confirm("Delete this permanently?")) { 
             await client.from(table).delete().eq("id", id); 
             if(table === 'Euides') { loadGuides(); loadAdmin(); document.getElementById('modalOverlay').style.display = 'none'; }
             else if(table === 'guide_categories') load();
@@ -346,7 +324,7 @@
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCatSelector").value, f = document.getElementById("gFile").files[0];
-        if(!t || !c) return alert("Fill title and content");
+        if(!t || !c) return alert("Missing Info");
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
@@ -354,8 +332,14 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, views:0}]);
-        alert("Sent for review");
+        alert("Sent for review!");
         location.reload();
+    }
+
+    async function handleAuth(type) {
+        const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
+        const { error } = type === 'login' ? await client.auth.signInWithPassword({email, password}) : await client.auth.signUp({email, password});
+        if(error) alert(error.message); else load();
     }
 
     window.addEventListener('load', () => {
