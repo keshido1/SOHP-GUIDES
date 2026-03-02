@@ -44,7 +44,7 @@
         body.wallpaper-mode .main-ui, body.wallpaper-mode .floating-tools button:not(.eye-toggle) { 
             opacity: 0 !important; pointer-events: none !important; transform: translateY(20px); 
         }
-        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; }
+        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; **background-size: cover;** }
 
         .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .content-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 30px; }
@@ -348,5 +348,3 @@
     }, 2000); 
 });
 </script>
-</body>
-</html>
