@@ -1,169 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - Columbina Edition</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Intro Overlay - Slide Down & Away */
-        #intro-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s;
-        }
-
-        #intro-image { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        .intro-hidden { transform: translateY(100vh) scale(0.8); opacity: 0; pointer-events: none; }
-
-        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); --outline: #cbd5e1; }
-        
-        #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
-        #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.6s; }
-        
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
-
-        body.wallpaper-mode .main-ui, body.wallpaper-mode .floating-tools button:not(.eye-toggle) { 
-            opacity: 0 !important; pointer-events: none !important; transform: translateY(20px); 
-        }
-        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; }
-
-        .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .content-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 30px; }
-        .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-
-        .preview-card { background: var(--glass); border-radius: 22px; overflow: hidden; cursor: pointer; transition: 0.3s; border: 1px solid rgba(0,0,0,0.05); }
-        .preview-thumb { width: 100%; height: 140px; object-fit: cover; background: #000; }
-        
-        #modalOverlay, #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9998; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .panel-content { background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 30px; overflow-y: auto; padding: 40px; position: relative; }
-
-        .full-view-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 20px; margin-bottom: 20px; background: #f8fafc; }
-
-        .comment-item { background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; position: relative; border: 1px solid #eef2f6; }
-        .comment-user { font-weight: 800; color: var(--peach); font-size: 12px; margin-bottom: 4px; }
-        
-        #updates-list { background: var(--glass); padding: 20px; border-radius: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 200px; }
-
-        .floating-tools { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; }
-        .circle-btn { width: 55px; height: 55px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        
-        button { background: var(--peach); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        .btn-red { background: #ef4444 !important; }
-        .btn-gray { background: #475569 !important; }
-        input, textarea, select { padding: 12px; border-radius: 12px; border: 2px solid var(--outline); width: 100%; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
-        .admin-box { background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        .hidden { display: none !important; }
-        
-        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <div id="intro-overlay">
-        <img id="intro-image" src="https://64.media.tumblr.com/c65d58db845ea9ff9cbc5962b410cde1/226f4374a9d95525-32/s540x810/87bbf8e7d11f38c6283670e0aad10dbb95cc75c2.gif" alt="Intro">
-    </div>
-
-    <div id="site-bg-layer"><div id="bg-blur-overlay"></div></div>
-
-    <div class="floating-tools">
-        <button class="circle-btn" style="background:#1e293b; color:white;" onclick="openAdmin()">⚙️</button>
-        <button class="circle-btn eye-toggle" style="background:white; color:var(--peach);" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</button>
-    </div>
-
-    <div id="modalOverlay" onclick="closeModals(event)"><div class="panel-content" id="modal-body"></div></div>
-
-    <div id="adminOverlay" onclick="closeModals(event)">
-        <div class="panel-content">
-            <h1 style="color:var(--peach);">Staff Dashboard</h1>
-            <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
-                <div>
-                    <div class="admin-box">
-                        <h3>📝 Review Queue</h3>
-                        <div id="pendingList">Scanning...</div>
-                    </div>
-                    <div class="admin-box">
-                        <h3>🏷️ Tag Manager</h3>
-                        <div id="tagManagerList"></div>
-                        <div style="display:flex; gap:5px; margin-top:10px;">
-                            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
-                            <button onclick="addTag()">Add</button>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <div class="admin-box">
-                        <h3>📢 Post Update</h3>
-                        <textarea id="bcContent" placeholder="Announcement..."></textarea>
-                        <button onclick="postUpdate()" style="width:100%;">Post to Updates</button>
-                    </div>
-                    <div class="admin-box">
-                        <h3>🖼️ Wallpaper Settings</h3>
-                        <input id="bgUrlInput" placeholder="Wallpaper URL">
-                        <button onclick="updateWallpaper()" style="width:100%;" class="btn-gray">Apply Background</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-ui">
-        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6);">🌸 SOHP GUIDES</h1>
-
-        <div class="admin-box" style="background:var(--glass); display:flex; justify-content:space-between; align-items:center;">
-            <div id="user-status" style="font-weight: 800;">Guest Mode</div>
-            <div id="auth-ui">
-                <input id="auth-email" placeholder="Email" style="width:150px; margin:0;">
-                <input id="auth-pass" type="password" placeholder="Pass" style="width:100px; margin:0;">
-                <button onclick="handleAuth('login')">Login</button>
-                <button onclick="handleAuth('signup')" class="btn-gray">Join</button>
-            </div>
-            <button id="logout-btn" class="btn-red hidden" onclick="client.auth.signOut().then(()=>location.reload())">Logout</button>
-        </div>
-
-        <div class="content-layout">
-            <div>
-                <div class="admin-box" style="background:var(--glass);">
-                    <h3>Submit New Guide</h3>
-                    <input id="gTitle" placeholder="Guide Title">
-                    <div style="display:flex; gap:10px;">
-                        <select id="gCatSelector"></select>
-                        <input type="file" id="gFile">
-                    </div>
-                    <textarea id="gContent" placeholder="Write guide..." rows="3"></textarea>
-                    <button onclick="submitGuide()" style="width:100%;">Submit Guide ✨</button>
-                </div>
-
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <input id="search" placeholder="Search guides..." onkeyup="loadGuides()" style="margin:0;">
-                    <select id="fCat" onchange="loadGuides()" style="width:150px; margin:0;"></select>
-                </div>
-                
-                <div id="guide-grid" class="guide-grid"></div>
-            </div>
-
-            <div>
-                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Recent Updates</h2>
-                <div id="updates-list"></div>
-            </div>
-        </div>
-    </div>
-
 <script>
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
     
     let isStaff = false;
     let currentUser = null;
+    const STAFF_PASS = 'skibidi'; // Change this to your preferred staff password
+
+    // Helper to protect sensitive actions
+    function validateStaff() {
+        if (isStaff) return true;
+        if (prompt("Enter Staff Password to confirm action:") === STAFF_PASS) {
+            isStaff = true;
+            return true;
+        }
+        alert("Unauthorized.");
+        return false;
+    }
 
     async function handleAuth(type) {
         const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
@@ -195,16 +46,30 @@
         loadUpdates();
     }
 
+    function getFileType(url) {
+        if (!url) return "";
+        const ext = url.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return "🖼️ IMG";
+        if (ext === 'pdf') return "📄 PDF";
+        if (['doc', 'docx'].includes(ext)) return "📝 DOC";
+        return "📁 FILE";
+    }
+
     async function openDetails(g) {
         await client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
+        
+        const fileIndicator = getFileType(g.image_url);
         
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 20px;">
                 <h1>${g.title}</h1>
-                ${isStaff ? `<div>
-                    <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
-                    <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
-                </div>` : ''}
+                <div style="display:flex; gap:10px;">
+                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank" style="text-decoration:none;"><button style="background:#6366f1;">Download ${fileIndicator}</button></a>` : ''}
+                    ${isStaff ? `
+                        <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
+                        <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
+                    ` : ''}
+                </div>
             </div>
             ${g.image_url ? `<img src="${g.image_url}" class="full-view-img">` : ''}
             <p style="white-space:pre-wrap; line-height:1.6;">${g.content}</p>
@@ -225,9 +90,8 @@
         const div = document.getElementById('comment-list');
         div.innerHTML = coms?.length ? "" : "No comments yet.";
         coms?.forEach(c => {
-            // Replaced c.user_email with 'User' to fix schema error
             div.innerHTML += `<div class="comment-item">
-                <div class="comment-user">Community Member</div>
+                <div class="comment-user">${c.user_email || 'Member'}</div>
                 <div>${c.content}</div>
                 ${(isStaff || (currentUser && currentUser.id === c.user_id)) ? `<button onclick="deleteComment('${c.id}', ${guideId})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px; padding:0;">Delete</button>` : ''}
             </div>`;
@@ -236,18 +100,26 @@
 
     async function postComment(guideId) {
         const text = document.getElementById('newComment').value;
-        if(!text) return;
-        // Removed user_email from insert to prevent Supabase errors
-        await client.from("guide_comments").insert([{ guide_id: guideId, user_id: currentUser.id, content: text }]);
+        if(!text || !currentUser) return;
+        await client.from("guide_comments").insert([{ guide_id: guideId, user_id: currentUser.id, user_email: currentUser.email, content: text }]);
         loadComments(guideId);
         document.getElementById('newComment').value = "";
     }
 
-    async function deleteComment(id, gId) { await client.from("guide_comments").delete().eq("id", id); loadComments(gId); }
+    async function deleteComment(id, gId) { 
+        if (!isStaff && currentUser) {
+            // Check if it's their own comment
+            const { data } = await client.from("guide_comments").select("user_id").eq("id", id).single();
+            if (data.user_id !== currentUser.id) {
+                 if (!validateStaff()) return;
+            }
+        }
+        await client.from("guide_comments").delete().eq("id", id); 
+        loadComments(gId); 
+    }
 
     function openAdmin() {
-        if (prompt("Staff Code:") === 'skibidi') { 
-            isStaff = true; 
+        if (validateStaff()) {
             document.getElementById('adminOverlay').style.display = 'flex'; 
             loadAdmin(); 
             loadGuides();
@@ -307,26 +179,35 @@
 
     function closeModals(e) { if(e.target === document.getElementById('modalOverlay') || e.target === document.getElementById('adminOverlay')) { e.target.style.display = 'none'; } }
 
-    async function approve(id) { await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
+    async function approve(id) { 
+        if (!validateStaff()) return;
+        await client.from("Euides").update({approved:true}).eq("id", id); 
+        loadAdmin(); loadGuides(); 
+    }
     
-    // No-Refresh versions of management tools
     async function addTag() { 
+        if (!validateStaff()) return;
         await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); 
         document.getElementById('newTagName').value = "";
         load(); 
     }
+
     async function updateWallpaper() { 
+        if (!validateStaff()) return;
         const newUrl = document.getElementById('bgUrlInput').value;
         await client.from("site_settings").upsert({id: "wallpaper", value: newUrl}); 
         document.getElementById('site-bg-layer').style.backgroundImage = `url('${newUrl}')`;
     }
+
     async function postUpdate() { 
+        if (!validateStaff()) return;
         await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); 
         document.getElementById('bcContent').value = "";
         loadUpdates(); 
     }
     
     async function editGuide(id, oldT, oldC) {
+        if (!validateStaff()) return;
         const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
         if(nt && nc) { 
             await client.from("Euides").update({title:nt, content:nc}).eq("id", id); 
@@ -336,6 +217,7 @@
     }
 
     async function deleteItem(table, id) { 
+        if (!validateStaff()) return;
         if(confirm("Are you sure?")) { 
             await client.from(table).delete().eq("id", id); 
             if(table === 'Euides') { loadGuides(); loadAdmin(); document.getElementById('modalOverlay').style.display = 'none'; }
@@ -366,5 +248,3 @@
         }, 2000); 
     });
 </script>
-</body>
-</html>
