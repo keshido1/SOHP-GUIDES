@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOHP Guides - Master Restore</title>
+    <title>SOHP Guides - Secure Master</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
@@ -15,8 +15,7 @@
 
         body.wallpaper-mode .main-ui { opacity: 0; pointer-events: none; }
         body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; }
-        body.wallpaper-mode .circle-btn:not(.eye-btn) { opacity: 0; pointer-events: none; }
-
+        
         .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; transition: 0.5s ease; }
         .user-auth-bar { background: var(--glass); padding: 15px 25px; border-radius: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .content-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 30px; }
@@ -33,13 +32,13 @@
         .circle-btn { width: 55px; height: 55px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .eye-btn { background: white; color: var(--peach); }
 
-        button { background: var(--peach); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
+        button { background: var(--peach); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; }
         .btn-sec { background: #f1f5f9; color: #475569; }
         input, textarea, select { padding: 12px; border-radius: 12px; border: 2px solid var(--outline); width: 100%; box-sizing: border-box; }
-        .file-type-badge { background: #e2e8f0; padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; display: inline-block; }
-        .tag-row { display: flex; justify-content: space-between; padding: 8px; background: #f8fafc; border-radius: 10px; margin-bottom: 5px; align-items: center; }
+        .tag-row { display: flex; justify-content: space-between; padding: 10px; background: #f8fafc; border-radius: 12px; margin-bottom: 5px; align-items: center; }
         .hidden { display: none !important; }
+        
+        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -55,10 +54,10 @@
 
     <div id="adminOverlay" onclick="closeModals(event)">
         <div class="panel-content">
-            <h2 style="color:var(--peach);">Staff Dashboard</h2>
+            <h2 style="color:var(--peach);">Staff Dashboard 🔒</h2>
             
             <h3>Review Queue</h3>
-            <div id="pendingList">Scanning for submissions...</div>
+            <div id="pendingList">Scanning...</div>
 
             <hr style="margin:25px 0;">
             <h3>Tag Manager</h3>
@@ -70,10 +69,10 @@
 
             <hr style="margin:25px 0;">
             <h3>Announcements & Wallpaper</h3>
-            <textarea id="bcContent" placeholder="New announcement content..." rows="2"></textarea>
+            <textarea id="bcContent" placeholder="Post a new update..." rows="2"></textarea>
             <button onclick="postUpdate()" style="background:#0f172a; width:100%; margin:10px 0;">Post Announcement</button>
-            <input id="bgUrlInput" placeholder="Wallpaper Image URL">
-            <button onclick="updateWallpaper()" style="background:#475569; width:100%; margin-top:10px;">Set Background</button>
+            <input id="bgUrlInput" placeholder="Wallpaper URL">
+            <button onclick="updateWallpaper()" style="background:#475569; width:100%; margin-top:10px;">Save Wallpaper</button>
         </div>
     </div>
 
@@ -96,18 +95,18 @@
         <div class="content-layout">
             <div>
                 <div style="background:var(--glass); padding:25px; border-radius:25px; border-top:6px solid var(--peach);">
-                    <h3>Submit New Guide</h3>
-                    <input id="gTitle" placeholder="Guide Title">
+                    <h3>Submit Guide</h3>
+                    <input id="gTitle" placeholder="Title">
                     <div style="display:flex; gap:10px; margin:10px 0;">
                         <select id="gCat"></select>
                         <input type="file" id="gFile">
                     </div>
-                    <textarea id="gContent" placeholder="Full guide text..." rows="3"></textarea>
-                    <button onclick="submitGuide()" style="width:100%; margin-top:15px;">Submit ✨</button>
+                    <textarea id="gContent" placeholder="Guide text..." rows="3"></textarea>
+                    <button onclick="submitGuide()" style="width:100%; margin-top:15px;">Submit for Review ✨</button>
                 </div>
 
                 <div style="display:flex; gap:10px; margin:25px 0;">
-                    <input type="text" id="search" placeholder="Search guides..." onkeyup="loadGuides()">
+                    <input type="text" id="search" placeholder="Search..." onkeyup="loadGuides()">
                     <select id="fCat" onchange="loadGuides()" style="width:140px;"></select>
                 </div>
 
@@ -115,7 +114,7 @@
             </div>
 
             <div>
-                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Announcements</h2>
+                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Staff Updates</h2>
                 <div id="updates-list"></div>
             </div>
         </div>
@@ -125,14 +124,20 @@
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
     
     let isStaff = false;
-    let currentUser = null;
 
-    function getExt(url) { if(!url) return "TXT"; return url.split('.').pop().split(/[?#]/)[0].toUpperCase(); }
+    // --- SECURITY WRAPPER ---
+    function staffCheck() {
+        if (isStaff) return true;
+        const p = prompt("Staff Access Required:");
+        if (p === 'skibidi') { isStaff = true; return true; }
+        alert("Unauthorized!"); return false;
+    }
+
+    function getFileExt(url) { if(!url) return "TXT"; return url.split('.').pop().split(/[?#]/)[0].toUpperCase(); }
 
     client.auth.onAuthStateChange((e, session) => {
-        currentUser = session?.user || null;
-        if(currentUser) {
-            document.getElementById('user-info').innerText = currentUser.email;
+        if(session?.user) {
+            document.getElementById('user-info').innerText = session.user.email;
             document.getElementById('auth-controls').classList.add('hidden');
             document.getElementById('logged-in-controls').classList.remove('hidden');
         }
@@ -151,7 +156,7 @@
 
             const { data: cats } = await client.from("guide_categories").select("*");
             const f = document.getElementById('fCat'), g = document.getElementById('gCat');
-            f.innerHTML = '<option value="All">All Tags</option>'; g.innerHTML = '';
+            f.innerHTML = '<option value="All">All Categories</option>'; g.innerHTML = '';
             cats?.forEach(c => { f.innerHTML += `<option value="${c.name}">${c.name}</option>`; g.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
             
             loadGuides();
@@ -170,11 +175,10 @@
             grid.innerHTML += `
                 <div class="preview-card" onclick='openDetails(${JSON.stringify(g).replace(/'/g, "&apos;")})'>
                     ${g.pinned ? `<div class="pin-tag">📌 PINNED</div>` : ''}
-                    <img class="preview-thumb" src="${g.image_url || 'https://via.placeholder.com/300x140?text=No+Media'}">
+                    <img class="preview-thumb" src="${g.image_url || 'https://via.placeholder.com/300x140?text=SOHP'}">
                     <div style="padding:15px;">
-                        <span class="file-type-badge">${getExt(g.image_url)}</span>
                         <h4 style="margin:5px 0;">${g.title}</h4>
-                        <div style="font-size:11px; color:#666;">👁️ ${g.views || 0} views | #${g.category}</div>
+                        <div style="font-size:11px; color:#666;">👁️ ${g.views || 0} views</div>
                     </div>
                 </div>`;
         });
@@ -182,46 +186,48 @@
 
     async function openDetails(g) {
         await client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
-        const ext = getExt(g.image_url);
+        const ext = getFileExt(g.image_url);
         document.getElementById('modal-body').innerHTML = `
             ${isStaff ? `
-                <div style="float:right; display:flex; gap:10px;">
+                <div style="float:right; display:flex; gap:8px; margin-bottom:15px;">
                     <button class="btn-sec" onclick="togglePin(${g.id}, ${g.pinned})">${g.pinned ? 'Unpin' : 'Pin'}</button>
                     <button class="btn-sec" onclick="editGuide(${g.id}, '${g.title}', \`${g.content}\`)">✏️ Edit</button>
-                    <button onclick="deleteItem('Euides', ${g.id})" style="background:red;">🗑️ Delete</button>
+                    <button onclick="deleteItem('Euides', ${g.id})" style="background:#ef4444;">🗑️ Delete</button>
                 </div>
             ` : ''}
             <h1>${g.title}</h1>
-            <p style="white-space:pre-wrap; line-height:1.6;">${g.content}</p>
+            <p style="white-space:pre-wrap; line-height:1.6; font-size:15px;">${g.content}</p>
             ${g.image_url ? `
-                <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
-                    <a href="${g.image_url}" download target="_blank" style="display:block; background:#0f172a; color:white; text-align:center; padding:12px; border-radius:12px; text-decoration:none; font-weight:800; margin-bottom:15px;">📥 Download ${ext} File</a>
+                <div style="margin-top:25px; border-top:1px solid #eee; padding-top:20px;">
+                    <a href="${g.image_url}" download target="_blank" style="display:block; background:#0f172a; color:white; text-align:center; padding:15px; border-radius:15px; text-decoration:none; font-weight:800; margin-bottom:15px;">📥 Download ${ext} File</a>
                     ${ext.match(/(MP4|WEBM|MOV)/) ? `<video controls src="${g.image_url}" style="width:100%; border-radius:15px;"></video>` : `<img src="${g.image_url}" style="width:100%; border-radius:15px;">`}
                 </div>` : ''}
         `;
         document.getElementById('modalOverlay').style.display = 'flex';
     }
 
-    async function togglePin(id, cur) { await client.from("Euides").update({pinned: !cur}).eq("id", id); location.reload(); }
-
-    async function editGuide(id, oldT, oldC) {
-        const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
-        if(nt && nc) { await client.from("Euides").update({title:nt, content:nc}).eq("id", id); location.reload(); }
-    }
+    // --- PROTECTED ACTIONS ---
+    async function togglePin(id, cur) { if(!staffCheck()) return; await client.from("Euides").update({pinned: !cur}).eq("id", id); location.reload(); }
+    async function editGuide(id, oldT, oldC) { if(!staffCheck()) return; const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC); if(nt && nc) { await client.from("Euides").update({title:nt, content:nc}).eq("id", id); location.reload(); } }
+    async function addTag() { if(!staffCheck()) return; const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{name: n}]); loadAdmin(); load(); } }
+    async function postUpdate() { if(!staffCheck()) return; const c = document.getElementById('bcContent').value; await client.from("community_updates").insert([{content: c}]); location.reload(); }
+    async function updateWallpaper() { if(!staffCheck()) return; await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
+    async function approve(id) { if(!staffCheck()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
+    async function deleteItem(table, id) { if(!staffCheck()) return; if(confirm("Delete this permanently?")) { await client.from(table).delete().eq("id", id); location.reload(); } }
 
     async function loadAdmin() {
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
-        const div = document.getElementById('pendingList'); div.innerHTML = p?.length ? "" : "None pending.";
+        const div = document.getElementById('pendingList'); div.innerHTML = p?.length ? "" : "No pending guides.";
         p?.forEach(i => {
             div.innerHTML += `
             <div style="padding:15px; border:1px solid #ddd; border-radius:15px; margin-bottom:15px; background:#f9f9f9;">
-                <span class="file-type-badge">${getExt(i.image_url)}</span>
+                <span style="font-size:10px; font-weight:800;">PENDING SUBMISSION</span>
                 <h3>${i.title}</h3>
-                <p style="font-size:12px; color:#666;">${i.content.substring(0,100)}...</p>
-                ${i.image_url ? `<img src="${i.image_url}" style="width:100px; border-radius:8px; margin-bottom:10px;"><br>` : ''}
+                <p style="font-size:12px; color:#555;">${i.content.substring(0,120)}...</p>
+                ${i.image_url ? `<img src="${i.image_url}" style="width:120px; border-radius:8px; margin:10px 0; display:block;">` : ''}
                 <div style="display:flex; gap:10px;">
-                    <button onclick="approve(${i.id})" style="background:green; flex:1;">Approve</button>
-                    <button onclick="deleteItem('Euides', ${i.id})" style="background:red; flex:1;">Reject</button>
+                    <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
+                    <button onclick="deleteItem('Euides', ${i.id})" style="background:#ef4444; flex:1;">Reject</button>
                 </div>
             </div>`;
         });
@@ -230,29 +236,19 @@
         cats?.forEach(c => { tDiv.innerHTML += `<div class="tag-row"><span>${c.name}</span><button style="background:none; color:red; padding:0;" onclick="deleteItem('guide_categories', ${c.id})">Remove</button></div>`; });
     }
 
-    function openAdmin() {
-        if(!isStaff) { if(prompt("Pass?") === 'skibidi') isStaff = true; else return; }
-        document.getElementById('adminOverlay').style.display = 'flex';
-        loadAdmin();
-    }
-
-    async function addTag() { const n = document.getElementById('newTagName').value; if(n) { await client.from("guide_categories").insert([{name: n}]); loadAdmin(); load(); } }
-    async function postUpdate() { const c = document.getElementById('bcContent').value; await client.from("community_updates").insert([{content: c}]); location.reload(); }
-    async function updateWallpaper() { await client.from("site_settings").upsert({id: "wallpaper", value: document.getElementById('bgUrlInput').value}); location.reload(); }
-    async function approve(id) { await client.from("Euides").update({approved:true, pinned:false}).eq("id", id); location.reload(); }
-    async function deleteItem(table, id) { if(confirm("Delete forever?")) { await client.from(table).delete().eq("id", id); location.reload(); } }
-    function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
+    function openAdmin() { if(staffCheck()) { document.getElementById('adminOverlay').style.display = 'flex'; loadAdmin(); } }
     
     async function loadUpdates() {
         const { data: us } = await client.from("community_updates").select("*").order("created_at", {ascending: false});
         const div = document.getElementById("updates-list"); div.innerHTML = "";
         us?.forEach(u => { div.innerHTML += `<div style="background:var(--glass); padding:15px; border-radius:15px; margin-bottom:10px; border-left:4px solid var(--peach); position:relative;">
-            ${isStaff ? `<button style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:12px;" onclick="deleteItem('community_updates', ${u.id})">🗑️</button>` : ''}
+            ${isStaff ? `<button style="position:absolute; right:10px; top:10px; background:none; color:#ef4444; font-size:12px;" onclick="deleteItem('community_updates', ${u.id})">🗑️</button>` : ''}
             ${u.content}</div>`; });
     }
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCat").value, f = document.getElementById("gFile").files[0];
+        if(!t || !c) return alert("Title and Content required!");
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
@@ -260,9 +256,10 @@
             url = client.storage.from("guide-media").getPublicUrl(name).data.publicUrl;
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, views:0, pinned:false}]);
-        alert("Submitted!"); location.reload();
+        alert("Submitted for staff review!"); location.reload();
     }
 
+    function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
     window.onload = load;
 </script>
 </body>
