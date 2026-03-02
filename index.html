@@ -1,45 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOHP Guides - Columbina Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Intro Overlay */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s;
+        }
+        #intro-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .intro-hidden { transform: translateY(100vh); opacity: 0; pointer-events: none; }
+
+        :root { --peach: #ff8e6e; --glass: rgba(255, 255, 255, 0.98); --outline: #cbd5e1; }
+        
+        #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
+        #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.6s; }
+        
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; background: transparent !important; }
+
+        body.wallpaper-mode .main-ui, body.wallpaper-mode .floating-tools button:not(.eye-toggle) { 
+            opacity: 0 !important; pointer-events: none !important; transform: translateY(20px); 
+        }
+        body.wallpaper-mode #bg-blur-overlay { backdrop-filter: blur(0px) brightness(1); background: transparent; }
+
+        .main-ui { max-width: 1200px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 10; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .content-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 30px; }
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+
+        .preview-card { background: var(--glass); border-radius: 22px; overflow: hidden; cursor: pointer; transition: 0.3s; border: 1px solid rgba(0,0,0,0.05); }
+        .preview-thumb { width: 100%; height: 140px; object-fit: cover; background: #000; }
+        
+        #modalOverlay, #adminOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9998; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .panel-content { background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 30px; overflow-y: auto; padding: 40px; position: relative; }
+
+        .full-view-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 20px; margin-bottom: 20px; background: #f8fafc; }
+
+        .comment-item { background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; position: relative; border: 1px solid #eef2f6; }
+        .comment-user { font-weight: 800; color: var(--peach); font-size: 11px; margin-bottom: 4px; }
+        
+        #updates-list { background: var(--glass); padding: 20px; border-radius: 22px; min-height: 200px; }
+
+        .floating-tools { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 10000; }
+        .circle-btn { width: 55px; height: 55px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        
+        button { background: var(--peach); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-red { background: #ef4444 !important; }
+        .btn-gray { background: #475569 !important; }
+        input, textarea, select { padding: 12px; border-radius: 12px; border: 2px solid var(--outline); width: 100%; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        .admin-box { background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        
+        @media (max-width: 900px) { .content-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="intro-overlay">
+        <img id="intro-image" src="https://64.media.tumblr.com/c65d58db845ea9ff9cbc5962b410cde1/226f4374a9d95525-32/s540x810/87bbf8e7d11f38c6283670e0aad10dbb95cc75c2.gif" alt="Intro">
+    </div>
+
+    <div id="site-bg-layer"><div id="bg-blur-overlay"></div></div>
+
+    <div class="floating-tools">
+        <button class="circle-btn" style="background:#1e293b; color:white;" onclick="openAdmin()">⚙️</button>
+        <button class="circle-btn eye-toggle" style="background:white; color:var(--peach);" onclick="document.body.classList.toggle('wallpaper-mode')">👁️</button>
+    </div>
+
+    <div id="modalOverlay" onclick="closeModals(event)"><div class="panel-content" id="modal-body"></div></div>
+
+    <div id="adminOverlay" onclick="closeModals(event)">
+        <div class="panel-content">
+            <h1 style="color:var(--peach);">Staff Dashboard</h1>
+            <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
+                <div>
+                    <div class="admin-box">
+                        <h3>📝 Review Queue</h3>
+                        <div id="pendingList">Scanning...</div>
+                    </div>
+                    <div class="admin-box">
+                        <h3>🏷️ Tag Manager</h3>
+                        <div id="tagManagerList"></div>
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <input id="newTagName" placeholder="New Tag..." style="margin:0;">
+                            <button onclick="addTag()">Add</button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="admin-box">
+                        <h3>📢 Post Update</h3>
+                        <textarea id="bcContent" placeholder="Announcement..."></textarea>
+                        <button onclick="postUpdate()" style="width:100%;">Post to Updates</button>
+                    </div>
+                    <div class="admin-box">
+                        <h3>🖼️ Wallpaper Settings</h3>
+                        <input id="bgUrlInput" placeholder="Wallpaper URL">
+                        <button onclick="updateWallpaper()" style="width:100%;" class="btn-gray">Apply Background</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-ui">
+        <h1 style="color:white; text-align:center; font-size:3rem; text-shadow:0 4px 20px rgba(0,0,0,0.6);">🌸 SOHP GUIDES</h1>
+
+        <div class="admin-box" style="background:var(--glass); display:flex; justify-content:space-between; align-items:center;">
+            <div id="user-status" style="font-weight: 800;">Guest Mode</div>
+            <div id="auth-ui">
+                <input id="auth-email" placeholder="Email" style="width:150px; margin:0;">
+                <input id="auth-pass" type="password" placeholder="Pass" style="width:100px; margin:0;">
+                <button onclick="handleAuth('login')">Login</button>
+                <button onclick="handleAuth('signup')" class="btn-gray">Join</button>
+            </div>
+            <button id="logout-btn" class="btn-red hidden" onclick="client.auth.signOut().then(()=>location.reload())">Logout</button>
+        </div>
+
+        <div class="content-layout">
+            <div>
+                <div class="admin-box" style="background:var(--glass);">
+                    <h3>Submit New Guide</h3>
+                    <input id="gTitle" placeholder="Guide Title">
+                    <div style="display:flex; gap:10px;">
+                        <select id="gCatSelector"></select>
+                        <input type="file" id="gFile">
+                    </div>
+                    <textarea id="gContent" placeholder="Write guide..." rows="3"></textarea>
+                    <button onclick="submitGuide()" style="width:100%;">Submit Guide ✨</button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input id="search" placeholder="Search guides..." onkeyup="loadGuides()" style="margin:0;">
+                    <select id="fCat" onchange="loadGuides()" style="width:150px; margin:0;"></select>
+                </div>
+                
+                <div id="guide-grid" class="guide-grid"></div>
+            </div>
+
+            <div>
+                <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Recent Updates</h2>
+                <div id="updates-list"></div>
+            </div>
+        </div>
+    </div>
+
 <script>
     const client = supabase.createClient("https://ioruwtajlnnxxqmgxugn.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcnV3dGFqbG5ueHhxbWd4dWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNTI5NjUsImV4cCI6MjA4NzkyODk2NX0.A7ycF68mc6liv-5gR-niFOLE-yPvfqPgFqPHeV1yUto");
     
     let isStaff = false;
     let currentUser = null;
-    const STAFF_PASS = 'skibidi'; // Change this to your preferred staff password
+    const STAFF_PASS = 'skibidi';
 
-    // Helper to protect sensitive actions
-    function validateStaff() {
-        if (isStaff) return true;
-        if (prompt("Enter Staff Password to confirm action:") === STAFF_PASS) {
-            isStaff = true;
-            return true;
-        }
-        alert("Unauthorized.");
-        return false;
-    }
-
-    async function handleAuth(type) {
-        const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
-        const { error } = type === 'login' ? await client.auth.signInWithPassword({email, password}) : await client.auth.signUp({email, password});
-        if(error) alert(error.message); else load();
-    }
-
+    // Speed fix: Parallel Load
     async function load() {
-        const { data: { user } } = await client.auth.getUser();
-        if(user) {
-            currentUser = user;
-            document.getElementById('user-status').innerText = user.email;
+        const [userData, bgData, catData] = await Promise.all([
+            client.auth.getUser(),
+            client.from("site_settings").select("value").eq("id", "wallpaper").single(),
+            client.from("guide_categories").select("*")
+        ]);
+
+        if(userData.data.user) {
+            currentUser = userData.data.user;
+            document.getElementById('user-status').innerText = currentUser.email;
             document.getElementById('auth-ui').classList.add('hidden');
             document.getElementById('logout-btn').classList.remove('hidden');
         }
 
-        const { data: bg } = await client.from("site_settings").select("value").eq("id", "wallpaper").single();
-        if(bg?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bg.value}')`;
+        if(bgData.data?.value) document.getElementById('site-bg-layer').style.backgroundImage = `url('${bgData.data.value}')`;
 
-        const { data: cats } = await client.from("guide_categories").select("*");
         const f = document.getElementById('fCat'), g = document.getElementById('gCatSelector');
         f.innerHTML = '<option value="All">All Tags</option>'; g.innerHTML = '';
-        cats?.forEach(c => { 
-            f.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
-            g.innerHTML += `<option value="${c.name}">${c.name}</option>`; 
+        catData.data?.forEach(c => { 
+            const opt = `<option value="${c.name}">${c.name}</option>`;
+            f.innerHTML += opt; g.innerHTML += opt; 
         });
 
         loadGuides();
@@ -48,23 +192,32 @@
 
     function getFileType(url) {
         if (!url) return "";
-        const ext = url.split('.').pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return "🖼️ IMG";
-        if (ext === 'pdf') return "📄 PDF";
-        if (['doc', 'docx'].includes(ext)) return "📝 DOC";
-        return "📁 FILE";
+        const ext = url.split('.').pop().toLowerCase().split('?')[0];
+        const map = { 'pdf':'📄 PDF', 'png':'🖼️ IMG', 'jpg':'🖼️ IMG', 'jpeg':'🖼️ IMG', 'gif':'🎞️ GIF', 'mp4':'🎥 VID' };
+        return map[ext] || "📁 FILE";
+    }
+
+    function validateStaff() {
+        if (isStaff) return true;
+        if (prompt("Staff Password:") === STAFF_PASS) { isStaff = true; return true; }
+        alert("Access Denied"); return false;
+    }
+
+    async function handleAuth(type) {
+        const email = document.getElementById('auth-email').value, password = document.getElementById('auth-pass').value;
+        const { error } = type === 'login' ? await client.auth.signInWithPassword({email, password}) : await client.auth.signUp({email, password});
+        if(error) alert(error.message); else load();
     }
 
     async function openDetails(g) {
-        await client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
-        
-        const fileIndicator = getFileType(g.image_url);
+        client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
+        const fileTag = getFileType(g.image_url);
         
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 20px;">
                 <h1>${g.title}</h1>
                 <div style="display:flex; gap:10px;">
-                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank" style="text-decoration:none;"><button style="background:#6366f1;">Download ${fileIndicator}</button></a>` : ''}
+                    ${g.image_url ? `<a href="${g.image_url}" download target="_blank"><button style="background:#6366f1;">Download ${fileTag}</button></a>` : ''}
                     ${isStaff ? `
                         <button class="btn-gray" onclick="editGuide(${g.id}, \`${g.title.replace(/'/g, "\\'")}\`, \`${g.content.replace(/`/g, "\\`")}\`)">Edit</button>
                         <button class="btn-red" onclick="deleteItem('Euides', ${g.id})">Delete</button>
@@ -91,7 +244,7 @@
         div.innerHTML = coms?.length ? "" : "No comments yet.";
         coms?.forEach(c => {
             div.innerHTML += `<div class="comment-item">
-                <div class="comment-user">${c.user_email || 'Member'}</div>
+                <div class="comment-user">${c.user_email || 'User'}</div>
                 <div>${c.content}</div>
                 ${(isStaff || (currentUser && currentUser.id === c.user_id)) ? `<button onclick="deleteComment('${c.id}', ${guideId})" style="position:absolute; right:10px; top:10px; background:none; color:red; font-size:10px; padding:0;">Delete</button>` : ''}
             </div>`;
@@ -107,24 +260,12 @@
     }
 
     async function deleteComment(id, gId) { 
-        if (!isStaff && currentUser) {
-            // Check if it's their own comment
-            const { data } = await client.from("guide_comments").select("user_id").eq("id", id).single();
-            if (data.user_id !== currentUser.id) {
-                 if (!validateStaff()) return;
-            }
-        }
+        if (!validateStaff()) return;
         await client.from("guide_comments").delete().eq("id", id); 
         loadComments(gId); 
     }
 
-    function openAdmin() {
-        if (validateStaff()) {
-            document.getElementById('adminOverlay').style.display = 'flex'; 
-            loadAdmin(); 
-            loadGuides();
-        }
-    }
+    function openAdmin() { if (validateStaff()) { document.getElementById('adminOverlay').style.display = 'flex'; loadAdmin(); } }
 
     async function loadAdmin() {
         const { data: p } = await client.from("Euides").select("*").eq("approved", false);
@@ -135,13 +276,11 @@
                 <h4>${i.title}</h4>
                 <div style="display:flex; gap:5px;">
                     <button onclick="approve(${i.id})" style="background:#22c55e; flex:1;">Approve</button>
-                    <button onclick='openDetails(${iStr})' class="btn-gray" style="flex:1;">View Full</button>
-                    <button onclick="editGuide(${i.id}, \`${i.title.replace(/'/g, "\\'")}\`, \`${i.content.replace(/`/g, "\\`")}\` )" class="btn-gray" style="flex:1;">Edit</button>
+                    <button onclick='openDetails(${iStr})' class="btn-gray" style="flex:1;">View</button>
                     <button onclick="deleteItem('Euides', ${i.id})" class="btn-red" style="flex:1;">Reject</button>
                 </div>
             </div>`;
         });
-
         const { data: cats } = await client.from("guide_categories").select("*");
         const tDiv = document.getElementById("tagManagerList"); tDiv.innerHTML = "";
         cats?.forEach(c => { 
@@ -157,7 +296,6 @@
         const cat = document.getElementById('fCat').value;
         let query = client.from("Euides").select("*").eq("approved", true).order("pinned", {ascending: false});
         if(cat !== "All") query = query.eq("category", cat);
-        
         const { data: gs } = await query;
         const grid = document.getElementById('guide-grid'); grid.innerHTML = "";
         gs?.filter(g => g.title.toLowerCase().includes(q)).forEach(g => {
@@ -177,42 +315,22 @@
         });
     }
 
-    function closeModals(e) { if(e.target === document.getElementById('modalOverlay') || e.target === document.getElementById('adminOverlay')) { e.target.style.display = 'none'; } }
+    function closeModals(e) { if(e.target.id.includes('Overlay')) e.target.style.display = 'none'; }
 
-    async function approve(id) { 
-        if (!validateStaff()) return;
-        await client.from("Euides").update({approved:true}).eq("id", id); 
-        loadAdmin(); loadGuides(); 
-    }
+    async function approve(id) { if (!validateStaff()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
     
-    async function addTag() { 
-        if (!validateStaff()) return;
-        await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); 
-        document.getElementById('newTagName').value = "";
-        load(); 
-    }
+    async function addTag() { if (!validateStaff()) return; await client.from("guide_categories").insert([{name: document.getElementById('newTagName').value}]); load(); }
 
-    async function updateWallpaper() { 
-        if (!validateStaff()) return;
-        const newUrl = document.getElementById('bgUrlInput').value;
-        await client.from("site_settings").upsert({id: "wallpaper", value: newUrl}); 
-        document.getElementById('site-bg-layer').style.backgroundImage = `url('${newUrl}')`;
-    }
+    async function updateWallpaper() { if (!validateStaff()) return; const newUrl = document.getElementById('bgUrlInput').value; await client.from("site_settings").upsert({id: "wallpaper", value: newUrl}); document.getElementById('site-bg-layer').style.backgroundImage = `url('${newUrl}')`; }
 
-    async function postUpdate() { 
-        if (!validateStaff()) return;
-        await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); 
-        document.getElementById('bcContent').value = "";
-        loadUpdates(); 
-    }
+    async function postUpdate() { if (!validateStaff()) return; await client.from("community_updates").insert([{content: document.getElementById('bcContent').value}]); loadUpdates(); }
     
     async function editGuide(id, oldT, oldC) {
         if (!validateStaff()) return;
         const nt = prompt("New Title:", oldT), nc = prompt("New Content:", oldC);
         if(nt && nc) { 
             await client.from("Euides").update({title:nt, content:nc}).eq("id", id); 
-            loadGuides();
-            document.getElementById('modalOverlay').style.display = 'none';
+            loadGuides(); document.getElementById('modalOverlay').style.display = 'none';
         }
     }
 
@@ -221,13 +339,14 @@
         if(confirm("Are you sure?")) { 
             await client.from(table).delete().eq("id", id); 
             if(table === 'Euides') { loadGuides(); loadAdmin(); document.getElementById('modalOverlay').style.display = 'none'; }
-            if(table === 'guide_categories') load();
-            if(table === 'community_updates') loadUpdates();
+            else if(table === 'guide_categories') load();
+            else loadUpdates();
         } 
     }
 
     async function submitGuide() {
         const t = document.getElementById("gTitle").value, c = document.getElementById("gContent").value, cat = document.getElementById("gCatSelector").value, f = document.getElementById("gFile").files[0];
+        if(!t || !c) return alert("Fill title and content");
         let url = null;
         if(f) {
             const name = Date.now() + "_" + f.name;
@@ -236,15 +355,16 @@
         }
         await client.from("Euides").insert([{title:t, content:c, category:cat, image_url:url, approved:false, views:0}]);
         alert("Sent for review");
-        document.getElementById("gTitle").value = ""; document.getElementById("gContent").value = "";
+        location.reload();
     }
 
     window.addEventListener('load', () => {
         load();
-        const intro = document.getElementById('intro-overlay');
         setTimeout(() => {
-            intro.classList.add('intro-hidden');
-            setTimeout(() => intro.remove(), 1500);
-        }, 2000); 
+            document.getElementById('intro-overlay').classList.add('intro-hidden');
+            setTimeout(() => document.getElementById('intro-overlay').remove(), 1000);
+        }, 1500); 
     });
 </script>
+</body>
+</html>
