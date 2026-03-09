@@ -25,7 +25,21 @@
             background: #1a1a1a; z-index: 9997; display: none; flex-direction: column;
             align-items: center; justify-content: center; color: white; text-align: center; padding: 20px;
         }
-        #maint-timer { font-size: 2.5rem; font-weight: 800; color: var(--peach); margin-top: 20px; font-variant-numeric: tabular-nums; }
+        .timer-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,142,110,0.3);
+            padding: 25px 50px;
+            border-radius: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+        #maint-timer { 
+            font-size: 3rem; 
+            font-weight: 800; 
+            color: var(--peach); 
+            text-shadow: 0 0 15px rgba(255,142,110,0.4);
+            font-variant-numeric: tabular-nums; 
+        }
 
         #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
         #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.6s; }
@@ -78,9 +92,11 @@
 </head>
 <body>
     <div id="maintenance-overlay">
-        <h1 style="font-size: 3rem; color: var(--peach);">BRB! 🛠️</h1>
-        <p id="maintenance-msg" style="max-width: 600px; font-size: 1.2rem; opacity: 0.8;">The site is currently down for maintenance. Please check back later!</p>
-        <div id="maint-timer"></div>
+        <h1 style="font-size: 3.5rem; color: var(--peach); margin-bottom: 5px;">BRB! 🛠️</h1>
+        <p id="maintenance-msg" style="max-width: 600px; font-size: 1.2rem; opacity: 0.8;"></p>
+        <div id="timer-box" class="timer-card hidden">
+            <div id="maint-timer"></div>
+        </div>
     </div>
 
     <div id="intro-overlay">
@@ -102,13 +118,13 @@
             <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
                 <div>
                     <div class="admin-box" style="border: 2px solid var(--peach);">
-                        <h3>🛠️ Maintenance Mode</h3>
+                        <h3>🛠️ Maintenance Control</h3>
                         <textarea id="maintMsgInput" placeholder="Maintenance message..."></textarea>
-                        <label style="font-size:11px; font-weight:800;">OPTIONAL: End Time (YYYY-MM-DDTHH:MM:SS)</label>
-                        <input id="maintTimeInput" placeholder="e.g. 2026-03-20T18:00:00">
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px; color:#64748b;">OPTIONAL: ESTIMATED REOPEN TIME</label>
+                        <input type="datetime-local" id="maintTimeInput" style="margin-bottom:15px;">
                         <div style="display:flex; gap:10px;">
-                            <button onclick="toggleMaintenance(true)" style="flex:1;">Enable Maintenance</button>
-                            <button onclick="toggleMaintenance(false)" class="btn-gray" style="flex:1;">Disable Maintenance</button>
+                            <button onclick="toggleMaintenance(true)" style="flex:1;">Turn ON</button>
+                            <button onclick="toggleMaintenance(false)" class="btn-gray" style="flex:1;">Turn OFF</button>
                         </div>
                     </div>
                     
@@ -215,7 +231,7 @@
         if (isMaint && !isStaff) {
             document.getElementById('maintenance-overlay').style.display = 'flex';
             document.getElementById('maintenance-msg').innerText = msg;
-            if(endAt) startCountdown(endAt);
+            if(endAt && endAt !== "") startCountdown(endAt);
         } else {
             document.getElementById('maintenance-overlay').style.display = 'none';
         }
@@ -245,7 +261,11 @@
     function startCountdown(endTime) {
         if(maintInterval) clearInterval(maintInterval);
         const timerDiv = document.getElementById('maint-timer');
+        const timerBox = document.getElementById('timer-box');
         const target = new Date(endTime).getTime();
+        
+        if (isNaN(target)) return;
+        timerBox.classList.remove('hidden');
         
         maintInterval = setInterval(() => {
             const now = new Date().getTime();
@@ -275,7 +295,6 @@
         location.reload();
     }
 
-    // Rest of your original functions (openDetails, loadComments, postComment, openAdmin, etc.)
     async function openDetails(g) {
         client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
         document.getElementById('modal-body').innerHTML = `
