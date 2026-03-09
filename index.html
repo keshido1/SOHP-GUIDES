@@ -19,6 +19,14 @@
         #intro-image { max-width: 100%; max-height: 100%; object-fit: contain; }
         .intro-hidden { transform: translateY(100vh); opacity: 0; pointer-events: none; }
 
+        /* Maintenance Overlay */
+        #maintenance-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #1a1a1a; z-index: 9997; display: none; flex-direction: column;
+            align-items: center; justify-content: center; color: white; text-align: center; padding: 20px;
+        }
+        #maint-timer { font-size: 2.5rem; font-weight: 800; color: var(--peach); margin-top: 20px; font-variant-numeric: tabular-nums; }
+
         #site-bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -9999; background: #1a1a1a no-repeat center center; background-size: cover; }
         #bg-blur-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(20px) brightness(0.6); background: rgba(0,0,0,0.3); transition: 0.6s; }
         
@@ -69,6 +77,12 @@
     </style>
 </head>
 <body>
+    <div id="maintenance-overlay">
+        <h1 style="font-size: 3rem; color: var(--peach);">BRB! 🛠️</h1>
+        <p id="maintenance-msg" style="max-width: 600px; font-size: 1.2rem; opacity: 0.8;">The site is currently down for maintenance. Please check back later!</p>
+        <div id="maint-timer"></div>
+    </div>
+
     <div id="intro-overlay">
         <img id="intro-image" src="https://64.media.tumblr.com/c65d58db845ea9ff9cbc5962b410cde1/226f4374a9d95525-32/s540x810/87bbf8e7d11f38c6283670e0aad10dbb95cc75c2.gif" alt="Intro">
     </div>
@@ -87,6 +101,17 @@
             <h1 style="color:var(--peach);">Staff Dashboard</h1>
             <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:20px;">
                 <div>
+                    <div class="admin-box" style="border: 2px solid var(--peach);">
+                        <h3>🛠️ Maintenance Mode</h3>
+                        <textarea id="maintMsgInput" placeholder="Maintenance message..."></textarea>
+                        <label style="font-size:11px; font-weight:800;">OPTIONAL: End Time (YYYY-MM-DDTHH:MM:SS)</label>
+                        <input id="maintTimeInput" placeholder="e.g. 2026-03-20T18:00:00">
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="toggleMaintenance(true)" style="flex:1;">Enable Maintenance</button>
+                            <button onclick="toggleMaintenance(false)" class="btn-gray" style="flex:1;">Disable Maintenance</button>
+                        </div>
+                    </div>
+                    
                     <div class="admin-box">
                         <h3>📝 Review Queue</h3>
                         <div id="pendingList">Scanning...</div>
@@ -119,32 +144,13 @@
     <div class="main-ui">
         <div style="text-align: center; margin-bottom: 60px; position: relative; padding: 30px 0;">
             <div style="position: relative; display: inline-block;">
-                
                 <div class="blossom-pulse" style="position: absolute; left: -140px; top: -40px; width: 160px; z-index: 1; pointer-events: none; opacity: 0.9;">
-                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10,100 C40,80 80,90 120,60" stroke="#4a3731" stroke-width="3" fill="none" stroke-linecap="round"/>
-                        <path d="M60,85 C70,70 90,65 100,50" stroke="#4a3731" stroke-width="2" fill="none" stroke-linecap="round"/>
-                        <circle cx="120" cy="60" r="10" fill="#ff8e6e" opacity="0.6" filter="blur(4px)"/>
-                        <circle cx="120" cy="60" r="6" fill="#fff" opacity="0.9"/>
-                        <circle cx="95" cy="55" r="8" fill="#ffb7a1" opacity="0.8"/>
-                        <circle cx="45" cy="88" r="5" fill="#ff8e6e"/>
-                        <circle cx="10" cy="100" r="4" fill="#ffb7a1"/>
-                    </svg>
+                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><path d="M10,100 C40,80 80,90 120,60" stroke="#4a3731" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M60,85 C70,70 90,65 100,50" stroke="#4a3731" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="120" cy="60" r="10" fill="#ff8e6e" opacity="0.6" filter="blur(4px)"/><circle cx="120" cy="60" r="6" fill="#fff" opacity="0.9"/><circle cx="95" cy="55" r="8" fill="#ffb7a1" opacity="0.8"/><circle cx="45" cy="88" r="5" fill="#ff8e6e"/><circle cx="10" cy="100" r="4" fill="#ffb7a1"/></svg>
                 </div>
-                
-                <h1 style="color:white; font-size:4rem; font-weight:800; text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,142,110,0.8), 0 10px 20px rgba(0,0,0,0.6); position: relative; z-index: 2; margin: 0;">
-                    SOHP<span style="color:var(--peach); margin-left:15px; filter: drop-shadow(0 0 10px var(--peach));">GUIDES</span>
-                </h1>
+                <h1 style="color:white; font-size:4rem; font-weight:800; text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,142,110,0.8), 0 10px 20px rgba(0,0,0,0.6); position: relative; z-index: 2; margin: 0;">SOHP<span style="color:var(--peach); margin-left:15px; filter: drop-shadow(0 0 10px var(--peach));">GUIDES</span></h1>
                 <div style="height: 3px; width: 60%; background: linear-gradient(90deg, transparent, var(--peach), transparent); margin: 10px auto; opacity: 0.6;"></div>
-
                 <div class="blossom-pulse" style="position: absolute; right: -140px; bottom: -30px; width: 160px; z-index: 1; pointer-events: none; transform: scaleX(-1) rotate(15deg); opacity: 0.9;">
-                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10,100 C40,80 80,90 120,60" stroke="#4a3731" stroke-width="3" fill="none" stroke-linecap="round"/>
-                        <circle cx="120" cy="60" r="12" fill="#ff8e6e" opacity="0.5" filter="blur(6px)"/>
-                        <circle cx="120" cy="60" r="7" fill="#fff" opacity="0.9"/>
-                        <circle cx="80" cy="82" r="9" fill="#ffb7a1" opacity="0.8"/>
-                        <circle cx="150" cy="45" r="5" fill="#ff8e6e"/>
-                    </svg>
+                    <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><path d="M10,100 C40,80 80,90 120,60" stroke="#4a3731" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="120" cy="60" r="12" fill="#ff8e6e" opacity="0.5" filter="blur(6px)"/><circle cx="120" cy="60" r="7" fill="#fff" opacity="0.9"/><circle cx="80" cy="82" r="9" fill="#ffb7a1" opacity="0.8"/><circle cx="150" cy="45" r="5" fill="#ff8e6e"/></svg>
                 </div>
             </div>
         </div>
@@ -172,15 +178,12 @@
                     <textarea id="gContent" placeholder="Write guide..." rows="3"></textarea>
                     <button onclick="submitGuide()" style="width:100%;">Submit Guide ✨</button>
                 </div>
-
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <input id="search" placeholder="Search guides..." onkeyup="loadGuides()" style="margin:0;">
                     <select id="fCat" onchange="loadGuides()" style="width:150px; margin:0;"></select>
                 </div>
-                
                 <div id="guide-grid" class="guide-grid"></div>
             </div>
-
             <div>
                 <h2 style="color:white; text-shadow:0 2px 10px rgba(0,0,0,0.5);">📢 Recent Updates</h2>
                 <div id="updates-list"></div>
@@ -193,7 +196,8 @@
     
     let isStaff = false;
     let currentUser = null;
-    const STAFF_PASS = '@$#!!@#$';
+    let maintInterval = null;
+    const STAFF_PASS = '@$#@!!@#$';
 
     function checkStaff() {
         if (isStaff) return true;
@@ -203,6 +207,19 @@
     }
 
     async function load() {
+        const { data: maint } = await client.from("site_settings").select("*").in("id", ["maintenance_mode", "maintenance_message", "maintenance_end"]);
+        const isMaint = maint?.find(s => s.id === 'maintenance_mode')?.value === 'true';
+        const msg = maint?.find(s => s.id === 'maintenance_message')?.value || "Site is under maintenance.";
+        const endAt = maint?.find(s => s.id === 'maintenance_end')?.value;
+        
+        if (isMaint && !isStaff) {
+            document.getElementById('maintenance-overlay').style.display = 'flex';
+            document.getElementById('maintenance-msg').innerText = msg;
+            if(endAt) startCountdown(endAt);
+        } else {
+            document.getElementById('maintenance-overlay').style.display = 'none';
+        }
+
         const [u, bg, cats] = await Promise.all([
             client.auth.getUser(),
             client.from("site_settings").select("value").eq("id", "wallpaper").single(),
@@ -225,10 +242,42 @@
         loadUpdates();
     }
 
+    function startCountdown(endTime) {
+        if(maintInterval) clearInterval(maintInterval);
+        const timerDiv = document.getElementById('maint-timer');
+        const target = new Date(endTime).getTime();
+        
+        maintInterval = setInterval(() => {
+            const now = new Date().getTime();
+            const diff = target - now;
+            if (diff <= 0) {
+                timerDiv.innerText = "Reopening soon...";
+                clearInterval(maintInterval);
+                return;
+            }
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            timerDiv.innerText = `${h}h ${m}m ${s}s`;
+        }, 1000);
+    }
+
+    async function toggleMaintenance(enabled) {
+        if (!checkStaff()) return;
+        const msg = document.getElementById('maintMsgInput').value || "The site is currently down for maintenance. Please check back later!";
+        const end = document.getElementById('maintTimeInput').value;
+        await client.from("site_settings").upsert([
+            {id: "maintenance_mode", value: enabled.toString()}, 
+            {id: "maintenance_message", value: msg},
+            {id: "maintenance_end", value: end || ""}
+        ]);
+        alert(enabled ? "Maintenance Mode ON" : "Maintenance Mode OFF");
+        location.reload();
+    }
+
+    // Rest of your original functions (openDetails, loadComments, postComment, openAdmin, etc.)
     async function openDetails(g) {
         client.from("Euides").update({ views: (g.views || 0) + 1 }).eq("id", g.id);
-        const typeStr = g.image_url?.split('.').pop() || "";
-        
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 20px;">
                 <h1>${g.title}</h1>
@@ -245,8 +294,7 @@
                 <div id="comment-list">Loading...</div>
                 <textarea id="newComment" placeholder="${currentUser ? 'Add a comment...' : 'Log in to comment'}" ${!currentUser ? 'disabled' : ''} style="margin-top:15px;"></textarea>
                 <button onclick="postComment(${g.id})" style="width:100%;" ${!currentUser ? 'disabled' : ''}>Post</button>
-            </div>
-        `;
+            </div>`;
         document.getElementById('modalOverlay').style.display = 'flex';
         loadComments(g.id);
     }
@@ -323,15 +371,13 @@
 
     async function approve(id) { if (!checkStaff()) return; await client.from("Euides").update({approved:true}).eq("id", id); loadAdmin(); loadGuides(); }
     
-    // Updated addTag to clear input and refresh dropdowns
     async function addTag() { 
         if (!checkStaff()) return; 
         const tagName = document.getElementById('newTagName').value;
         if(!tagName) return;
         await client.from("guide_categories").insert([{name: tagName}]); 
-        document.getElementById('newTagName').value = ""; // Clear the input after adding
-        load(); // This refreshes the whole site UI (including dropdowns)
-        loadAdmin(); // This refreshes the tag list inside the staff dashboard
+        document.getElementById('newTagName').value = "";
+        load(); loadAdmin();
     }
 
     async function updateWallpaper() { if (!checkStaff()) return; const url = document.getElementById('bgUrlInput').value; await client.from("site_settings").upsert({id: "wallpaper", value: url}); document.getElementById('site-bg-layer').style.backgroundImage = `url('${url}')`; }
